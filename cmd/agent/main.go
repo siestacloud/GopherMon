@@ -17,13 +17,13 @@ var (
 	cms *metricscustom.CustomMetrics
 )
 
-func NewMonitor(duration int) {
+func NewMonitor(duration, pd int) {
 	//обьект обертка над runtime.MemStats
 	var cmemstats metricscustom.CustomMemStats
 	var intervalcounter int64
 	//Задаем интервал сбора метрик
 	var interval = time.Duration(duration) * time.Second
-	var postinterval = time.Duration(4) * time.Second
+	var postinterval = time.Duration(pd) * time.Second
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs)
 	go postMetrics(postinterval)
@@ -78,7 +78,7 @@ func postMetrics(interval time.Duration) {
 }
 func main() {
 
-	NewMonitor(2)
+	NewMonitor(2, 10)
 
 }
 
