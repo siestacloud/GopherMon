@@ -89,7 +89,7 @@ func url() {
 		// конструируем запрос
 		request, err := http.NewRequest("POST", url, nil)
 		if err != nil {
-			// обработаем ошибку
+			//
 		}
 		// устанавливаем заголовки
 		request.Header.Add("Content-Type", "text/plain")
@@ -100,6 +100,7 @@ func url() {
 		if err != nil {
 			// log.Fatal(err)
 		}
+		defer resp.Body.Close()
 		fmt.Printf("%v", resp)
 	}
 	for _, v := range cms.C {
@@ -108,7 +109,7 @@ func url() {
 		// конструируем запрос
 		request, err := http.NewRequest("POST", url, nil)
 		if err != nil {
-			// обработаем ошибку
+			//
 		}
 		// устанавливаем заголовки
 		request.Header.Add("Content-Type", "text/plain")
@@ -117,8 +118,9 @@ func url() {
 		// отправляем запрос
 		resp, err := client.Do(request)
 		if err != nil {
-			// обработаем ошибку
+			//
 		}
+		defer resp.Body.Close()
 		fmt.Printf("%v", resp)
 	}
 }
