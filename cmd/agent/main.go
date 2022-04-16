@@ -4,9 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"os/signal"
 	"strconv"
-	"syscall"
 	"time"
 
 	"github.com/siestacloud/service-monitoring/internal/agent/metricscustom"
@@ -51,30 +49,30 @@ func postMetrics(interval time.Duration) {
 	}
 }
 func main() {
-	sigs := make(chan os.Signal, 1)
-	signal.Notify(sigs)
-	go func() {
-		for {
-			sig := <-sigs
-			switch sig {
-			case os.Interrupt:
-				HandleSignal(sig)
-				// os.Exit(0)
-			case syscall.SIGTERM:
-				HandleSignal(sig)
-				os.Exit(0)
-			case syscall.SIGINT:
-				HandleSignal(sig)
-				os.Exit(0)
-			case syscall.SIGQUIT:
-				HandleSignal(sig)
-				os.Exit(0)
-			default:
-				// fmt.Println("Ignoring: ", sig)
+	// sigs := make(chan os.Signal, 1)
+	// signal.Notify(sigs)
+	// go func() {
+	// 	for {
+	// 		sig := <-sigs
+	// 		switch sig {
+	// 		case os.Interrupt:
+	// 			HandleSignal(sig)
+	// 			// os.Exit(0)
+	// 		case syscall.SIGTERM:
+	// 			HandleSignal(sig)
+	// 			os.Exit(0)
+	// 		case syscall.SIGINT:
+	// 			HandleSignal(sig)
+	// 			os.Exit(0)
+	// 		case syscall.SIGQUIT:
+	// 			HandleSignal(sig)
+	// 			os.Exit(0)
+	// 		default:
+	// 			// fmt.Println("Ignoring: ", sig)
 
-			}
-		}
-	}()
+	// 		}
+	// 	}
+	// }()
 	NewMonitor(2, 10)
 
 }
