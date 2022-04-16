@@ -16,44 +16,17 @@ var (
 	cms *metricscustom.CustomMetrics
 )
 
-func NewMonitor(duration, pd int) {
-	//обьект обертка над runtime.MemStats
-	var cmemstats metricscustom.CustomMemStats
-	var intervalcounter int64
-	//Задаем интервал сбора метрик
-	var interval = time.Duration(duration) * time.Second
-	var postinterval = time.Duration(pd) * time.Second
-	go postMetrics(postinterval)
-
-	for {
-		select {
-		// case <-time.After(postinterval):
-		// 	fmt.Println("10 SECONDS!!!!")
-		case <-time.After(interval):
-			intervalcounter++
-			// Получаем все метрики
-			cmemstats.ParseAllMetrics()
-			// Берем только нужные
-			cms = cmemstats.Convert(intervalcounter)
-			// Just encode to json and print
-			// b, _ := json.Marshal(cms)
-			// fmt.Println(string(b))
-		}
-	}
-}
-
-func postMetrics(interval time.Duration) {
-	for {
-		select {
-		case <-time.After(interval):
-			url()
-		}
-	}
-}
 func main() {
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs)
-	go func() {
+
+	//Задаем интервал сбора метрик
+	pollInterval := time.Duration(2) * time.Second
+	reportInterval := time.Duration(10) * time.Second
+	go takeMetrics(pollInterval)
+	go postMetrics(reportInterval)
+
+	func() {
 		for {
 			sig := <-sigs
 			switch sig {
@@ -71,12 +44,39 @@ func main() {
 				os.Exit(0)
 			default:
 				// fmt.Println("Ignoring: ", sig)
-
 			}
 		}
 	}()
-	NewMonitor(2, 10)
+}
 
+func takeMetrics(pollInterval time.Duration) {
+	//обьект обертка над runtime.MemStats
+	var cmemstats metricscustom.CustomMemStats
+	var intervalcounter int64
+	for {
+		select {
+		// case <-time.After(postinterval):
+		// 	fmt.Println("10 SECONDS!!!!")
+		case <-time.After(pollInterval):
+			intervalcounter++
+			// Получаем все метрики
+			cmemstats.ParseAllMetrics()
+			// Берем только нужные
+			cms = cmemstats.Convert(intervalcounter)
+			// Just encode to json and print
+			// b, _ := json.Marshal(cms)
+			// fmt.Println(string(b))
+		}
+	}
+}
+
+func postMetrics(reportInterval time.Duration) {
+	for {
+		select {
+		case <-time.After(reportInterval):
+			url()
+		}
+	}
 }
 
 func url() {
