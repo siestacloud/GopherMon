@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
@@ -34,6 +33,7 @@ func NewMonitor(duration, pd int) {
 			switch sig {
 			case os.Interrupt:
 				HandleSignal(sig)
+				// os.Exit(0)
 			case syscall.SIGTERM:
 				HandleSignal(sig)
 				os.Exit(0)
@@ -59,16 +59,14 @@ func NewMonitor(duration, pd int) {
 			cmemstats.ParseAllMetrics()
 			// Берем только нужные
 			cms = cmemstats.Convert(intervalcounter)
-
 			// Just encode to json and print
-			b, _ := json.Marshal(cms)
-			fmt.Println(string(b))
+			// b, _ := json.Marshal(cms)
+			// fmt.Println(string(b))
 		}
 	}
 }
 
 func postMetrics(interval time.Duration) {
-
 	for {
 		select {
 		case <-time.After(interval):
@@ -89,19 +87,19 @@ func url() {
 		// конструируем запрос
 		request, err := http.NewRequest("POST", url, nil)
 		if err != nil {
-			//
+			fmt.Printf("Request %s\n\n", err)
 		}
 		// устанавливаем заголовки
 		request.Header.Add("Content-Type", "text/plain")
 		// конструируем клиент
 		client := &http.Client{}
 		// отправляем запрос
-		resp, err := client.Do(request)
+		_, err = client.Do(request)
 		if err != nil {
-			// log.Fatal(err)
+			fmt.Printf("Do %s\n\n", err)
 		}
-		defer resp.Body.Close()
-		fmt.Printf("%v", resp)
+		//defer resp.Body.Close()
+		// fmt.Printf("%v", resp)
 	}
 	for _, v := range cms.C {
 		url := fmt.Sprintf("http://localhost:8080/update/%s/%s/%s", v.Types, v.Name, strconv.FormatInt(v.Value, 10))
@@ -109,19 +107,19 @@ func url() {
 		// конструируем запрос
 		request, err := http.NewRequest("POST", url, nil)
 		if err != nil {
-			//
+			fmt.Printf("req %s\n\n", err)
 		}
 		// устанавливаем заголовки
 		request.Header.Add("Content-Type", "text/plain")
 		// конструируем клиент
 		client := &http.Client{}
 		// отправляем запрос
-		resp, err := client.Do(request)
+		_, err = client.Do(request)
 		if err != nil {
-			//
+			fmt.Printf("do %s\n\n", err)
 		}
-		defer resp.Body.Close()
-		fmt.Printf("%v", resp)
+		// defer resp.Body.Close()
+		// fmt.Printf("%v", resp)
 	}
 }
 
