@@ -82,7 +82,7 @@ func main() {
 
 func url() {
 	for _, v := range cms.G {
-		url := fmt.Sprintf("http://localhost:8080/update/%s/%s/%f", v.Types, v.Name, v.Value)
+		url := fmt.Sprintf("http://localhost:8080/update/%s/%s/%v", v.Types, v.Name, int(v.Value))
 
 		// конструируем запрос
 		request, err := http.NewRequest("POST", url, nil)
@@ -94,11 +94,11 @@ func url() {
 		// конструируем клиент
 		client := &http.Client{}
 		// отправляем запрос
-		resp, err := client.Do(request)
+		_, err = client.Do(request)
 		if err != nil {
 			fmt.Printf("Do %s\n\n", err)
 		}
-		defer resp.Body.Close()
+		// defer resp.Body.Close()
 		// fmt.Printf("%v", resp)
 	}
 	for _, v := range cms.C {
@@ -114,11 +114,11 @@ func url() {
 		// конструируем клиент
 		client := &http.Client{}
 		// отправляем запрос
-		resp, err := client.Do(request)
+		_, err = client.Do(request)
 		if err != nil {
 			fmt.Printf("do %s\n\n", err)
 		}
-		defer resp.Body.Close()
+		// defer resp.Body.Close()
 		// fmt.Printf("%v", resp)
 	}
 }
