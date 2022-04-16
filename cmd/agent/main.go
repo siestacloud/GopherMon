@@ -26,12 +26,9 @@ func main() {
 	go takeMetrics(ctx, pollInterval)
 	go postMetrics(ctx, reportInterval)
 
-	select {
-	case <-ctx.Done():
-		time.Sleep(time.Second)
-		os.Exit(0)
-	}
-
+	<-ctx.Done()
+	time.Sleep(time.Second)
+	os.Exit(0)
 }
 
 func takeMetrics(ctx context.Context, pollInterval time.Duration) {
@@ -80,11 +77,13 @@ func url() {
 		// конструируем клиент
 		client := &http.Client{}
 		// отправляем запрос
-		_, err = client.Do(request)
+		resp, err := client.Do(request)
 		if err != nil {
 			fmt.Printf("Do %s\n\n", err)
 		}
-		// defer resp.Body.Close()
+		if resp != nil {
+			defer resp.Body.Close()
+		}
 		// fmt.Printf("%v", resp)
 	}
 	for _, v := range cms.C {
@@ -100,9 +99,12 @@ func url() {
 		// конструируем клиент
 		client := &http.Client{}
 		// отправляем запрос
-		_, err = client.Do(request)
+		resp, err := client.Do(request)
 		if err != nil {
 			fmt.Printf("do %s\n\n", err)
+		}
+		if resp != nil {
+			defer resp.Body.Close()
 		}
 		// defer resp.Body.Close()
 		// fmt.Printf("%v", resp)
