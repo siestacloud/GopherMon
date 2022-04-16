@@ -59,7 +59,7 @@ func main() {
 			switch sig {
 			case os.Interrupt:
 				HandleSignal(sig)
-				os.Exit(0)
+				// os.Exit(0)
 			case syscall.SIGTERM:
 				HandleSignal(sig)
 				os.Exit(0)
