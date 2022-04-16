@@ -44,7 +44,7 @@ func NewMonitor(duration, pd int) {
 				HandleSignal(sig)
 				os.Exit(0)
 			default:
-				fmt.Println("Ignoring: ", sig)
+				// fmt.Println("Ignoring: ", sig)
 
 			}
 		}
