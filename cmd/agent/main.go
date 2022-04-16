@@ -94,11 +94,11 @@ func url() {
 		// конструируем клиент
 		client := &http.Client{}
 		// отправляем запрос
-		_, err = client.Do(request)
+		resp, err := client.Do(request)
 		if err != nil {
 			fmt.Printf("Do %s\n\n", err)
 		}
-		//defer resp.Body.Close()
+		defer resp.Body.Close()
 		// fmt.Printf("%v", resp)
 	}
 	for _, v := range cms.C {
@@ -114,11 +114,11 @@ func url() {
 		// конструируем клиент
 		client := &http.Client{}
 		// отправляем запрос
-		_, err = client.Do(request)
+		resp, err := client.Do(request)
 		if err != nil {
 			fmt.Printf("do %s\n\n", err)
 		}
-		// defer resp.Body.Close()
+		defer resp.Body.Close()
 		// fmt.Printf("%v", resp)
 	}
 }
