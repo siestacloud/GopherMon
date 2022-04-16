@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"os"
@@ -17,46 +18,30 @@ var (
 )
 
 func main() {
-	sigs := make(chan os.Signal, 1)
-	signal.Notify(sigs)
-
+	ctx, cansel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT)
+	defer cansel()
 	//Задаем интервал сбора метрик
 	pollInterval := time.Duration(2) * time.Second
 	reportInterval := time.Duration(10) * time.Second
-	go takeMetrics(pollInterval)
-	go postMetrics(reportInterval)
+	go takeMetrics(ctx, pollInterval)
+	go postMetrics(ctx, reportInterval)
 
-	func() {
-		for {
-			sig := <-sigs
-			switch sig {
-			case os.Interrupt:
-				HandleSignal(sig)
-				os.Exit(0)
-			case syscall.SIGTERM:
-				HandleSignal(sig)
-				os.Exit(0)
-			case syscall.SIGINT:
-				HandleSignal(sig)
-				os.Exit(0)
-			case syscall.SIGQUIT:
-				HandleSignal(sig)
-				os.Exit(0)
-			default:
-				// fmt.Println("Ignoring: ", sig)
-			}
-		}
-	}()
+	select {
+	case <-ctx.Done():
+		time.Sleep(time.Second)
+		os.Exit(0)
+	}
+
 }
 
-func takeMetrics(pollInterval time.Duration) {
+func takeMetrics(ctx context.Context, pollInterval time.Duration) {
 	//обьект обертка над runtime.MemStats
 	var cmemstats metricscustom.CustomMemStats
 	var intervalcounter int64
 	for {
 		select {
-		// case <-time.After(postinterval):
-		// 	fmt.Println("10 SECONDS!!!!")
+		case <-ctx.Done():
+			return
 		case <-time.After(pollInterval):
 			intervalcounter++
 			// Получаем все метрики
@@ -70,9 +55,11 @@ func takeMetrics(pollInterval time.Duration) {
 	}
 }
 
-func postMetrics(reportInterval time.Duration) {
+func postMetrics(ctx context.Context, reportInterval time.Duration) {
 	for {
 		select {
+		case <-ctx.Done():
+			return
 		case <-time.After(reportInterval):
 			url()
 		}
