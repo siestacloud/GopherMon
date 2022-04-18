@@ -1,3 +1,116 @@
 package main
 
-func main() {}
+import (
+	"context"
+	"fmt"
+	"net/http"
+	"os"
+	"os/signal"
+	"strconv"
+	"syscall"
+	"time"
+
+	"github.com/siestacloud/service-monitoring/internal/agent/metricscustom"
+)
+
+var (
+	cms *metricscustom.CustomMetrics
+)
+
+func main() {
+	ctx, cansel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT)
+	defer cansel()
+	//Задаем интервал сбора метрик
+	pollInterval := time.Duration(2) * time.Second
+	reportInterval := time.Duration(10) * time.Second
+	go takeMetrics(ctx, pollInterval)
+	go postMetrics(ctx, reportInterval)
+
+	<-ctx.Done()
+	time.Sleep(time.Second)
+	os.Exit(0)
+}
+
+func takeMetrics(ctx context.Context, pollInterval time.Duration) {
+	//обьект обертка над runtime.MemStats
+	var cmemstats metricscustom.CustomMemStats
+	var intervalcounter int64
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-time.After(pollInterval):
+			intervalcounter++
+			// Получаем все метрики
+			cmemstats.ParseAllMetrics()
+			// Берем только нужные
+			cms = cmemstats.Convert(intervalcounter)
+			// Just encode to json and print
+			// b, _ := json.Marshal(cms)
+			// fmt.Println(string(b))
+		}
+	}
+}
+
+func postMetrics(ctx context.Context, reportInterval time.Duration) {
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-time.After(reportInterval):
+			url()
+		}
+	}
+}
+
+func url() {
+	for _, v := range cms.G {
+		url := fmt.Sprintf("http://localhost:8080/update/%s/%s/%v", v.Types, v.Name, int(v.Value))
+
+		// конструируем запрос
+		request, err := http.NewRequest("POST", url, nil)
+		if err != nil {
+			fmt.Printf("Request %s\n\n", err)
+		}
+		// устанавливаем заголовки
+		request.Header.Add("Content-Type", "text/plain")
+		// конструируем клиент
+		client := &http.Client{}
+		// отправляем запрос
+		resp, err := client.Do(request)
+		if err != nil {
+			fmt.Printf("Do %s\n\n", err)
+		}
+		if resp != nil {
+			defer resp.Body.Close()
+		}
+		// fmt.Printf("%v", resp)
+	}
+	for _, v := range cms.C {
+		url := fmt.Sprintf("http://localhost:8080/update/%s/%s/%s", v.Types, v.Name, strconv.FormatInt(v.Value, 10))
+
+		// конструируем запрос
+		request, err := http.NewRequest("POST", url, nil)
+		if err != nil {
+			fmt.Printf("req %s\n\n", err)
+		}
+		// устанавливаем заголовки
+		request.Header.Add("Content-Type", "text/plain")
+		// конструируем клиент
+		client := &http.Client{}
+		// отправляем запрос
+		resp, err := client.Do(request)
+		if err != nil {
+			fmt.Printf("do %s\n\n", err)
+		}
+		if resp != nil {
+			defer resp.Body.Close()
+		}
+		// defer resp.Body.Close()
+		// fmt.Printf("%v", resp)
+	}
+}
+
+func HandleSignal(signal os.Signal) {
+	fmt.Println("HandleSignal() Received:", signal)
+}
