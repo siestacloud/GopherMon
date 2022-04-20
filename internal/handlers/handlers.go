@@ -110,10 +110,10 @@ func (h *MyHandler) Update() http.HandlerFunc {
 			return
 		}
 
-		if r.Header.Get("Content-Type") != "text/plain" {
-			http.Error(w, "Only text/plain requests are allowed!", http.StatusMethodNotAllowed)
-			return
-		}
+		// if r.Header.Get("Content-Type") != "text/plain" {
+		// 	http.Error(w, "Only text/plain requests are allowed!", http.StatusMethodNotAllowed)
+		// 	return
+		// }
 
 		m, err := metricURI(r.URL.Path)
 		if err != nil {
@@ -135,7 +135,7 @@ func metricURI(uri string) (*metricscustom.Metric, error) {
 	m := strings.ReplaceAll(uri, "/update/", "")
 	ms := strings.Split(m, "/")
 	if len(ms) != 3 {
-		return nil, errors.New("Incorrect len URI")
+		return nil, errors.New("incorrect len URI")
 	}
 	v, err := strconv.ParseUint(ms[2], 10, 64)
 	if err != nil {
