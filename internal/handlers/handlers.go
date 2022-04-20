@@ -113,19 +113,22 @@ func (h *MyHandler) Update() http.HandlerFunc {
 			http.Error(w, "Only POST requests are allowed!", http.StatusMethodNotAllowed)
 			return
 		}
-
+		defer r.Body.Close()
 		// if r.Header.Get("Content-Type") != "text/plain" {
 		// 	http.Error(w, "Only text/plain requests are allowed!", http.StatusMethodNotAllowed)
 		// 	return
 		// }
 		m := strings.ReplaceAll(r.URL.Path, "/update/", "")
 		ms := strings.Split(m, "/")
+		fmt.Println(ms)
 		if len(ms) != 3 {
 			http.Error(w, "", http.StatusNotFound)
+			return
 		}
 		v, err := strconv.ParseUint(ms[2], 10, 64)
 		if err != nil {
 			http.Error(w, "", http.StatusBadRequest)
+			return
 		}
 		s := metricscustom.Metric{Name: ms[1], Types: ms[0], Value: v}
 		fmt.Printf("New metric: %s %v %s\n\n\n", s.Name, s.Value, s.Types)
