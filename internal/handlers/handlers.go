@@ -130,7 +130,13 @@ func (h *MyHandler) Update() http.HandlerFunc {
 			http.Error(w, "", http.StatusBadRequest)
 			return
 		}
+
+		if !checkType(ms[0]) {
+			http.Error(w, "", http.StatusNotImplemented)
+			return
+		}
 		s := metricscustom.Metric{Name: ms[1], Types: ms[0], Value: v}
+
 		fmt.Printf("New metric: %s %v %s\n\n\n", s.Name, s.Value, s.Types)
 		h.s.Update(&s)
 		fmt.Println("In Storage: ")
@@ -139,4 +145,14 @@ func (h *MyHandler) Update() http.HandlerFunc {
 		}
 
 	}
+}
+
+func checkType(s string) bool {
+	var types []string = []string{"gauge", "counter"}
+	for _, v := range types {
+		if s == v {
+			return true
+		}
+	}
+	return false
 }
