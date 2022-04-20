@@ -1,0 +1,9 @@
+server:
+  log_level: debug
+  host: 127.0.0.1
+  port: 8080
+  timeout:
+      server: 20
+      read: 15
+      write: 10
+      idle: 5

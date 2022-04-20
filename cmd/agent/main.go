@@ -3,21 +3,24 @@ package main
 import (
 	"context"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"os/signal"
-	"strconv"
+	"runtime"
 	"syscall"
 	"time"
 
-	"github.com/siestacloud/service-monitoring/internal/agent/metricscustom"
+	"github.com/siestacloud/service-monitoring/internal/metricscustom"
 )
 
 var (
-	cms *metricscustom.CustomMetrics
+	cms runtime.MemStats //обьект обертка над runtime.MemStats
+	cmp = metricscustom.NewMetricsPool()
 )
 
 func main() {
+
 	ctx, cansel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT)
 	defer cansel()
 	//Задаем интервал сбора метрик
@@ -32,19 +35,18 @@ func main() {
 }
 
 func takeMetrics(ctx context.Context, pollInterval time.Duration) {
-	//обьект обертка над runtime.MemStats
-	var cmemstats metricscustom.CustomMemStats
-	var intervalcounter int64
+
+	var ic int64
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		case <-time.After(pollInterval):
-			intervalcounter++
+			ic++
 			// Получаем все метрики
-			cmemstats.ParseAllMetrics()
+			runtime.ReadMemStats(&cms)
 			// Берем только нужные
-			cms = cmemstats.Convert(intervalcounter)
+			cmp.Convert(ic, &cms)
 			// Just encode to json and print
 			// b, _ := json.Marshal(cms)
 			// fmt.Println(string(b))
@@ -64,7 +66,7 @@ func postMetrics(ctx context.Context, reportInterval time.Duration) {
 }
 
 func url() {
-	for _, v := range cms.G {
+	for _, v := range cmp.M {
 		url := fmt.Sprintf("http://localhost:8080/update/%s/%s/%v", v.Types, v.Name, int(v.Value))
 
 		// конструируем запрос
@@ -83,32 +85,15 @@ func url() {
 		}
 		if resp != nil {
 			defer resp.Body.Close()
+			b, err := io.ReadAll(resp.Body)
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+			fmt.Printf("%v\n", string(b))
 		}
-		// fmt.Printf("%v", resp)
 	}
-	for _, v := range cms.C {
-		url := fmt.Sprintf("http://localhost:8080/update/%s/%s/%s", v.Types, v.Name, strconv.FormatInt(v.Value, 10))
 
-		// конструируем запрос
-		request, err := http.NewRequest("POST", url, nil)
-		if err != nil {
-			fmt.Printf("req %s\n\n", err)
-		}
-		// устанавливаем заголовки
-		request.Header.Add("Content-Type", "text/plain")
-		// конструируем клиент
-		client := &http.Client{}
-		// отправляем запрос
-		resp, err := client.Do(request)
-		if err != nil {
-			fmt.Printf("do %s\n\n", err)
-		}
-		if resp != nil {
-			defer resp.Body.Close()
-		}
-		// defer resp.Body.Close()
-		// fmt.Printf("%v", resp)
-	}
 }
 
 func HandleSignal(signal os.Signal) {
