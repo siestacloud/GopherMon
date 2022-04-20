@@ -118,6 +118,7 @@ func (h *MyHandler) Update() http.HandlerFunc {
 		m, err := metricURI(r.URL.Path)
 		if err != nil {
 			log.Println(err)
+			http.Error(w, "", http.StatusNotFound)
 			return
 		}
 		fmt.Printf("New metric: %s %v %s\n\n\n", m.Name, m.Value, m.Types)
