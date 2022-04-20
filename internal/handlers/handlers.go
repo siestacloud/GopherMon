@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -38,11 +37,16 @@ func (h *MyHandler) HandleUpdate() http.HandlerFunc {
 			return
 		}
 
-		m, err := metricURI(r.URL.Path)
-		if err != nil {
-			log.Println(err)
-			return
+		m := strings.ReplaceAll(r.URL.Path, "/update/", "")
+		ms := strings.Split(m, "/")
+		if len(ms) != 3 {
+			http.Error(w, "", http.StatusNotFound)
 		}
+		v, err := strconv.ParseUint(ms[2], 10, 64)
+		if err != nil {
+			http.Error(w, "", http.StatusBadRequest)
+		}
+		s := metricscustom.Metric{Name: ms[1], Types: ms[0], Value: v}
 
 		file, err := database.New("metrics.json")
 		if err != nil {
@@ -67,18 +71,18 @@ func (h *MyHandler) HandleUpdate() http.HandlerFunc {
 		}
 		var check bool
 		for _, v := range mp.M {
-			if v.Name == m.Name {
+			if v.Name == s.Name {
 				if v.Types == "counter" {
-					v.Value += m.Value
+					v.Value += s.Value
 				}
 				if v.Types == "gauge" {
-					v.Value = m.Value
+					v.Value = s.Value
 				}
 				check = true
 			}
 		}
 		if !check {
-			mp.M[m.Name] = *m
+			mp.M[s.Name] = s
 		}
 
 		js, err := json.MarshalIndent(mp.M, "", " ")
@@ -114,35 +118,22 @@ func (h *MyHandler) Update() http.HandlerFunc {
 		// 	http.Error(w, "Only text/plain requests are allowed!", http.StatusMethodNotAllowed)
 		// 	return
 		// }
-
-		m, err := metricURI(r.URL.Path)
-		if err != nil {
-			log.Println(err)
+		m := strings.ReplaceAll(r.URL.Path, "/update/", "")
+		ms := strings.Split(m, "/")
+		if len(ms) != 3 {
 			http.Error(w, "", http.StatusNotFound)
-			return
 		}
-		fmt.Printf("New metric: %s %v %s\n\n\n", m.Name, m.Value, m.Types)
-		h.s.Update(m)
+		v, err := strconv.ParseUint(ms[2], 10, 64)
+		if err != nil {
+			http.Error(w, "", http.StatusBadRequest)
+		}
+		s := metricscustom.Metric{Name: ms[1], Types: ms[0], Value: v}
+		fmt.Printf("New metric: %s %v %s\n\n\n", s.Name, s.Value, s.Types)
+		h.s.Update(&s)
 		fmt.Println("In Storage: ")
 		for k, v := range h.s.Mp.M {
 			fmt.Printf("	Metric:  %s\n	    Name:%s\n	    Value:%v\n	    Type:%s\n\n", k, v.Name, v.Value, v.Types)
 		}
 
 	}
-}
-
-//makeMetric take metric from URI
-func metricURI(uri string) (*metricscustom.Metric, error) {
-	m := strings.ReplaceAll(uri, "/update/", "")
-	ms := strings.Split(m, "/")
-	if len(ms) != 3 {
-		return nil, errors.New("incorrect len URI")
-	}
-	v, err := strconv.ParseUint(ms[2], 10, 64)
-	if err != nil {
-		return nil, err
-	}
-	s := metricscustom.Metric{Name: ms[1], Types: ms[0], Value: v}
-
-	return &s, nil
 }
