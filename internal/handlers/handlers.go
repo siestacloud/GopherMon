@@ -148,7 +148,7 @@ func (h *MyHandler) Update() http.HandlerFunc {
 }
 
 func checkType(s string) bool {
-	var types []string = []string{"gauge", "counter"}
+	var types = []string{"gauge", "counter"}
 	for _, v := range types {
 		if s == v {
 			return true
