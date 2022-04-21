@@ -1,0 +1,142 @@
+{
+ "alloc": {
+  "Name": "alloc",
+  "Types": "gaudge",
+  "Value": 1083104
+ },
+ "buckhashsys": {
+  "Name": "buckhashsys",
+  "Types": "gaudge",
+  "Value": 3866
+ },
+ "frees": {
+  "Name": "frees",
+  "Types": "gaudge",
+  "Value": 10
+ },
+ "gccpufraction": {
+  "Name": "gccpufraction",
+  "Types": "gaudge",
+  "Value": 0
+ },
+ "gcsys": {
+  "Name": "gcsys",
+  "Types": "gaudge",
+  "Value": 3758600
+ },
+ "heapalloc": {
+  "Name": "heapalloc",
+  "Types": "gaudge",
+  "Value": 298560
+ },
+ "heapidle": {
+  "Name": "heapidle",
+  "Types": "gaudge",
+  "Value": 2891776
+ },
+ "heapinuse": {
+  "Name": "heapinuse",
+  "Types": "gaudge",
+  "Value": 876544
+ },
+ "heapobjects": {
+  "Name": "heapobjects",
+  "Types": "gaudge",
+  "Value": 677
+ },
+ "heapreleased": {
+  "Name": "heapreleased",
+  "Types": "gaudge",
+  "Value": 2891776
+ },
+ "heapsys": {
+  "Name": "heapsys",
+  "Types": "gaudge",
+  "Value": 3768320
+ },
+ "lastgc": {
+  "Name": "lastgc",
+  "Types": "gaudge",
+  "Value": 0
+ },
+ "lookups": {
+  "Name": "lookups",
+  "Types": "gaudge",
+  "Value": 0
+ },
+ "mallocs": {
+  "Name": "mallocs",
+  "Types": "gaudge",
+  "Value": 687
+ },
+ "mcacheinuse": {
+  "Name": "mcacheinuse",
+  "Types": "gaudge",
+  "Value": 19200
+ },
+ "mcachesys": {
+  "Name": "mcachesys",
+  "Types": "gaudge",
+  "Value": 31200
+ },
+ "mspaninuse": {
+  "Name": "mspaninuse",
+  "Types": "gaudge",
+  "Value": 28968
+ },
+ "mspansys": {
+  "Name": "mspansys",
+  "Types": "gaudge",
+  "Value": 32640
+ },
+ "nextgc": {
+  "Name": "nextgc",
+  "Types": "gaudge",
+  "Value": 4194304
+ },
+ "numforcedgc": {
+  "Name": "numforcedgc",
+  "Types": "gaudge",
+  "Value": 0
+ },
+ "numgc": {
+  "Name": "numgc",
+  "Types": "gaudge",
+  "Value": 0
+ },
+ "othersys": {
+  "Name": "othersys",
+  "Types": "gaudge",
+  "Value": 715150
+ },
+ "pausetotalns": {
+  "Name": "pausetotalns",
+  "Types": "gaudge",
+  "Value": 0
+ },
+ "randomvalue": {
+  "Name": "randomvalue",
+  "Types": "gaudge",
+  "Value": 81
+ },
+ "stackinuse": {
+  "Name": "stackinuse",
+  "Types": "gaudge",
+  "Value": 425984
+ },
+ "stacksys": {
+  "Name": "stacksys",
+  "Types": "gauge",
+  "Value": 458752
+ },
+ "sys": {
+  "Name": "sys",
+  "Types": "gauge",
+  "Value": 9260048
+ },
+ "totalalloc": {
+  "Name": "totalalloc",
+  "Types": "gauge",
+  "Value": 1682112
+ }
+}
