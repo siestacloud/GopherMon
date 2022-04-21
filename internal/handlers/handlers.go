@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/labstack/echo/v4"
 	"github.com/siestacloud/service-monitoring/internal/database"
 	"github.com/siestacloud/service-monitoring/internal/metricscustom"
 	"github.com/siestacloud/service-monitoring/internal/storage"
@@ -106,34 +107,28 @@ func (h *MyHandler) HandleUpdate() http.HandlerFunc {
 }
 
 //Update upload file /upload
-func (h *MyHandler) Update() http.HandlerFunc {
+func (h *MyHandler) Update() echo.HandlerFunc {
 
-	return func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPost {
-			http.Error(w, "Only POST requests are allowed!", http.StatusMethodNotAllowed)
-			return
+	return func(c echo.Context) error {
+		fmt.Println("New request on: ")
+		if c.Request().Method != http.MethodPost {
+			return c.HTML(http.StatusMethodNotAllowed, "")
 		}
-		defer r.Body.Close()
-		// if r.Header.Get("Content-Type") != "text/plain" {
-		// 	http.Error(w, "Only text/plain requests are allowed!", http.StatusMethodNotAllowed)
-		// 	return
-		// }
-		m := strings.ReplaceAll(r.URL.Path, "/update/", "")
+		defer c.Request().Body.Close()
+
+		m := strings.ReplaceAll(c.Request().URL.Path, "/update/", "")
 		ms := strings.Split(m, "/")
 		fmt.Println(ms)
 		if len(ms) != 3 {
-			http.Error(w, "", http.StatusNotFound)
-			return
+			return c.HTML(http.StatusNotFound, "")
 		}
 		v, err := strconv.ParseUint(ms[2], 10, 64)
 		if err != nil {
-			http.Error(w, "", http.StatusBadRequest)
-			return
+			return c.HTML(http.StatusBadRequest, "")
 		}
 
 		if !checkType(ms[0]) {
-			http.Error(w, "", http.StatusNotImplemented)
-			return
+			return c.HTML(http.StatusNotImplemented, "")
 		}
 		s := metricscustom.Metric{Name: ms[1], Types: ms[0], Value: v}
 
@@ -143,7 +138,42 @@ func (h *MyHandler) Update() http.HandlerFunc {
 		for k, v := range h.s.Mp.M {
 			fmt.Printf("	Metric:  %s\n	    Name:%s\n	    Value:%v\n	    Type:%s\n\n", k, v.Name, v.Value, v.Types)
 		}
+		return c.HTML(http.StatusOK, "")
+	}
+}
 
+// GET http://<АДРЕС_СЕРВЕРА>/value/<ТИП_МЕТРИКИ>/<ИМЯ_МЕТРИКИ>
+func (h *MyHandler) ShowMetric() echo.HandlerFunc {
+
+	return func(c echo.Context) error {
+		fmt.Println("New request on: ")
+
+		defer c.Request().Body.Close()
+		t := c.Param("type")
+		n := c.Param("name")
+		metric := h.s.Take(t, n)
+		if metric == nil {
+			return c.HTML(http.StatusNotFound, "")
+		}
+
+		return c.HTML(http.StatusOK, fmt.Sprintf("%v", metric.Value))
+	}
+}
+
+// GET http://<АДРЕС_СЕРВЕРА>/value/<ТИП_МЕТРИКИ>/<ИМЯ_МЕТРИКИ>
+func (h *MyHandler) ShowAllMetrics() echo.HandlerFunc {
+
+	return func(c echo.Context) error {
+		fmt.Println("New request on: ")
+
+		defer c.Request().Body.Close()
+
+		mp, err := h.s.TakeAll()
+		if err != nil || mp == nil {
+			return c.HTML(http.StatusNotFound, "")
+		}
+
+		return c.HTML(http.StatusOK, string(mp))
 	}
 }
 

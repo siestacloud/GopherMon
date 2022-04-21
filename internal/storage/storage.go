@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/siestacloud/service-monitoring/internal/metricscustom"
@@ -36,4 +37,29 @@ func (s *Storage) Update(m *metricscustom.Metric) bool {
 	}
 	s.Mp.M[m.Name] = *m
 	return false
+}
+
+func (s *Storage) Take(t, n string) *metricscustom.Metric {
+
+	for k, v := range s.Mp.M {
+		if v.Name == n {
+			if v.Types == t {
+				m := s.Mp.M[k]
+				return &m
+			}
+			return nil
+		}
+	}
+
+	return nil
+}
+
+func (s *Storage) TakeAll() ([]byte, error) {
+
+	js, err := json.MarshalIndent(s.Mp, "", "	")
+	if err != nil {
+		return nil, err
+	}
+
+	return js, nil
 }

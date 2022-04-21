@@ -9,6 +9,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/labstack/echo/v4"
 	"github.com/siestacloud/service-monitoring/internal/handlers"
 	"github.com/siestacloud/service-monitoring/internal/server/config"
 
@@ -19,7 +20,7 @@ import (
 type APIServer struct {
 	config   *config.ServerConfig
 	logger   *logrus.Logger
-	mux      *http.ServeMux
+	e        *echo.Echo
 	handlers *handlers.MyHandler
 }
 
@@ -28,7 +29,7 @@ func New(config *config.ServerConfig) *APIServer {
 	return &APIServer{
 		config:   config,
 		logger:   logrus.New(),
-		mux:      http.NewServeMux(),
+		e:        echo.New(),
 		handlers: handlers.New(),
 	}
 }
@@ -53,7 +54,6 @@ func (s *APIServer) Start() error {
 
 	server := &http.Server{
 		Addr:         s.config.Server.Host + ":" + s.config.Server.Port,
-		Handler:      s.mux,
 		ReadTimeout:  s.config.Server.Timeout.Read * time.Second,
 		WriteTimeout: s.config.Server.Timeout.Write * time.Second,
 		IdleTimeout:  s.config.Server.Timeout.Idle * time.Second,
@@ -63,18 +63,13 @@ func (s *APIServer) Start() error {
 		return err
 	}
 
-	s.configureRouter()
-
-	s.logger.Info("Start API server on ", s.config.Server.Port)
+	s.configureEchoRouter()
 
 	// Run the server on a new goroutine
 	go func() {
-		if err := server.ListenAndServe(); err != nil {
-			if err == http.ErrServerClosed {
-				// Normal interrupt operation, ignore
-			} else {
-				log.Fatalf("Server failed to start due to err: %v", err)
-			}
+		if err := s.e.StartServer(server); err != nil {
+			s.logger.Info("Fail starting http server: ", err)
+			log.Fatal()
 		}
 	}()
 
@@ -107,8 +102,19 @@ func (s *APIServer) configureLogger() error {
 }
 
 //configureRouter Set handlers for URL path's
-func (s *APIServer) configureRouter() {
-	s.mux.HandleFunc("/update/", s.handlers.Update())
+func (s *APIServer) configureEchoRouter() {
+	s.e.POST("/update/*", s.handlers.Update())
+	s.e.GET("/value/:type/:name", s.handlers.ShowMetric())
+	s.e.GET("/", s.handlers.ShowAllMetrics())
 	// Prometheus endpoint
+	// s.e.Use(middleware.Logger())
+	// s.e.Use(middleware.Recover())
+	// s.e.GET("/", s.handlers.Update())
+	// a.e.GET("/success", s.handleSuccess)
+	// a.e.POST("/pull", s.handleUploadPost)
+	// a.e.GET("/metrics", Handler(promhttp.Handler())
+	// a.e.GET("/css/*", s.staticHandle)
+	// a.e.GET("/js/*", s.staticHandle)
+	// a.e.GET("/img/*", s.staticHandle)
 
 }
