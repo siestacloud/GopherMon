@@ -15,7 +15,7 @@ import (
 )
 
 var (
-	cms runtime.MemStats //обьект обертка над runtime.MemStats
+	cms runtime.MemStats
 	cmp = metricscustom.NewMetricsPool()
 )
 
@@ -46,7 +46,7 @@ func takeMetrics(ctx context.Context, pollInterval time.Duration) {
 			// Получаем все метрики
 			runtime.ReadMemStats(&cms)
 			// Берем только нужные
-			cmp.Convert(ic, &cms)
+			cmp.AddMetrics(ic, &cms)
 			// Just encode to json and print
 			// b, _ := json.Marshal(cms)
 			// fmt.Println(string(b))
@@ -67,7 +67,14 @@ func postMetrics(ctx context.Context, reportInterval time.Duration) {
 
 func url() {
 	for _, v := range cmp.M {
-		url := fmt.Sprintf("http://localhost:8080/update/%s/%s/%v", v.Types, v.Name, int(v.Value))
+		var url string
+		if v.MType == "counter" {
+			url = fmt.Sprintf("http://localhost:8080/update/%s/%s/%v", v.MType, v.ID, v.Delta)
+			fmt.Println(url)
+		} else {
+			url = fmt.Sprintf("http://localhost:8080/update/%s/%s/%v", v.MType, v.ID, v.Value)
+			fmt.Println(url)
+		}
 
 		// конструируем запрос
 		request, err := http.NewRequest("POST", url, nil)
@@ -84,7 +91,6 @@ func url() {
 			fmt.Printf("Do %s\n\n", err)
 		}
 		if resp != nil {
-			defer resp.Body.Close()
 			b, err := io.ReadAll(resp.Body)
 			if err != nil {
 				fmt.Println(err)
@@ -92,10 +98,7 @@ func url() {
 			}
 			fmt.Printf("%v\n", string(b))
 		}
+		resp.Body.Close()
 	}
 
-}
-
-func HandleSignal(signal os.Signal) {
-	fmt.Println("HandleSignal() Received:", signal)
 }

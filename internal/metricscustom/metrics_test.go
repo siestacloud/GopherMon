@@ -34,23 +34,23 @@ func TestNewMetrics(t *testing.T) {
 		{
 			name:   "Test #1",
 			values: []string{"testMetric", "counter", "1"},
-			want:   Metric{Name: "testMetric", Value: 1, Types: "counter"},
+			want:   Metric{ID: "testMetric", Delta: 1, MType: "counter"},
 		},
 		{
 			name:   "Test #2",
-			values: []string{"metric2", "gouge", "123"},
-			want:   Metric{Name: "metric2", Value: 123, Types: "gouge"},
+			values: []string{"metric2", "gauge", "123"},
+			want:   Metric{ID: "metric2", Value: 123, MType: "gauge"},
 		},
 		{
 			name:   "Test #3",
 			values: []string{"metrics3", "counter", "111"},
-			want:   Metric{Name: "metrics3", Value: 111, Types: "counter"},
+			want:   Metric{ID: "metrics3", Delta: 111, MType: "counter"},
 		},
 	}
 	for _, tt := range test {
-		m, err := NewMetric(tt.values[1], tt.values[0], tt.values[2])
-		if err != nil {
-			fmt.Println(err)
+		m, status := NewMetric(tt.values[1], tt.values[0], tt.values[2])
+		if status != "" {
+			fmt.Println(status)
 		}
 		assert.Equal(t, tt.want, *m)
 	}
