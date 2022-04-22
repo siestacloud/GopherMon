@@ -32,6 +32,7 @@ type Metric struct {
 type Value struct{}
 
 func NewMetric(t, n, v string) (*Metric, string) {
+	fmt.Println("TYPE:  ", t)
 	if !checkType(t) {
 		fmt.Println("check")
 		return nil, "unknown metric type"

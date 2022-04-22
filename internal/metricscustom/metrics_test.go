@@ -38,8 +38,8 @@ func TestNewMetrics(t *testing.T) {
 		},
 		{
 			name:   "Test #2",
-			values: []string{"metric2", "gouge", "123"},
-			want:   Metric{Name: "metric2", Value: 123, Types: "gouge"},
+			values: []string{"metric2", "gauge", "123"},
+			want:   Metric{Name: "metric2", Value: 123, Types: "gauge"},
 		},
 		{
 			name:   "Test #3",
