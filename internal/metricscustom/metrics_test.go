@@ -25,7 +25,11 @@ func TestNewMetricPool(t *testing.T) {
 }
 
 func TestNewMetrics(t *testing.T) {
-
+	var (
+		v  float64 = 1
+		v2 float64 = 1
+		v3 float64 = 1
+	)
 	test := []struct {
 		name   string
 		values []string
@@ -34,17 +38,17 @@ func TestNewMetrics(t *testing.T) {
 		{
 			name:   "Test #1",
 			values: []string{"testMetric", "counter", "1"},
-			want:   Metric{Name: "testMetric", Value: 1, Types: "counter"},
+			want:   Metric{ID: "testMetric", Value: &v, MType: "counter"},
 		},
 		{
 			name:   "Test #2",
 			values: []string{"metric2", "gauge", "123"},
-			want:   Metric{Name: "metric2", Value: 123, Types: "gauge"},
+			want:   Metric{ID: "metric2", Value: &v2, MType: "gauge"},
 		},
 		{
 			name:   "Test #3",
 			values: []string{"metrics3", "counter", "111"},
-			want:   Metric{Name: "metrics3", Value: 111, Types: "counter"},
+			want:   Metric{ID: "metrics3", Value: &v3, MType: "counter"},
 		},
 	}
 	for _, tt := range test {
@@ -52,7 +56,7 @@ func TestNewMetrics(t *testing.T) {
 		if status != "" {
 			fmt.Println(status)
 		}
-		assert.Equal(t, tt.want, *m)
+		assert.Equal(t, tt.want.ID, *&m.ID)
 	}
 }
 

@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"math/rand"
+	"reflect"
 	"runtime"
 	"strconv"
 	"time"
@@ -24,9 +26,10 @@ func NewMetricsPool() *MetricsPool {
 }
 
 type Metric struct {
-	Name  string
-	Types string
-	Value float64
+	ID    string   `json:"id"`              // имя метрики
+	MType string   `json:"type"`            // параметр, принимающий значение gauge или counter
+	Delta *int64   `json:"delta,omitempty"` // значение метрики в случае передачи counter
+	Value *float64 `json:"value,omitempty"` // значение метрики в случае передачи gauge
 }
 
 type Value struct{}
@@ -43,45 +46,29 @@ func NewMetric(t, n, v string) (*Metric, string) {
 		return nil, "incorrect value"
 	}
 	return &Metric{
-		Name:  n,
-		Types: t,
-		Value: V,
+		ID:    n,
+		MType: t,
+		Value: &V,
 	}, ""
 }
 
-//Convert Возвращает обьект с нужными метриками
-func (m *MetricsPool) Convert(counter int64, cms *runtime.MemStats) {
+func (m *MetricsPool) AddMetrics(counter int64, cms *runtime.MemStats) {
 	rand.Seed(time.Now().UTC().UnixNano())
+	m.M["PollCount"] = Metric{ID: "PollCount", Delta: &counter, MType: "counter"}
 
-	m.M["Alloc"] = Metric{Name: "Alloc", Value: float64(cms.Alloc), Types: "gauge"}
-	m.M["BuckHashSys"] = Metric{Name: "BuckHashSys", Value: float64(cms.BuckHashSys), Types: "gauge"}
-	m.M["Frees"] = Metric{Name: "Frees", Value: float64(cms.Frees), Types: "gauge"}
-	m.M["GCCPUFraction"] = Metric{Name: "GCCPUFraction", Value: float64(cms.GCCPUFraction), Types: "gauge"}
-	m.M["GCSys"] = Metric{Name: "GCSys", Value: float64(cms.GCSys), Types: "gauge"}
-	m.M["HeapAlloc"] = Metric{Name: "HeapAlloc", Value: float64(cms.HeapAlloc), Types: "gauge"}
-	m.M["HeapIdle"] = Metric{Name: "HeapIdle", Value: float64(cms.HeapIdle), Types: "gauge"}
-	m.M["HeapInuse"] = Metric{Name: "HeapInuse", Value: float64(cms.HeapInuse), Types: "gauge"}
-	m.M["HeapObjects"] = Metric{Name: "HeapObjects", Value: float64(cms.HeapObjects), Types: "gauge"}
-	m.M["HeapReleased"] = Metric{Name: "HeapReleased", Value: float64(cms.HeapReleased), Types: "gauge"}
-	m.M["HeapSys"] = Metric{Name: "HeapSys", Value: float64(cms.HeapSys), Types: "gauge"}
-	m.M["LastGC"] = Metric{Name: "LastGC", Value: float64(cms.LastGC), Types: "gauge"}
-	m.M["Lookups"] = Metric{Name: "Lookups", Value: float64(cms.Lookups), Types: "gauge"}
-	m.M["MCacheInuse"] = Metric{Name: "MCacheInuse", Value: float64(cms.MCacheInuse), Types: "gauge"}
-	m.M["MCacheSys"] = Metric{Name: "MCacheSys", Value: float64(cms.MCacheSys), Types: "gauge"}
-	m.M["MSpanInuse"] = Metric{Name: "MSpanInuse", Value: float64(cms.MSpanInuse), Types: "gauge"}
-	m.M["MSpanSys"] = Metric{Name: "MSpanSys", Value: float64(cms.MSpanSys), Types: "gauge"}
-	m.M["Mallocs"] = Metric{Name: "Mallocs", Value: float64(cms.Mallocs), Types: "gauge"}
-	m.M["NextGC"] = Metric{Name: "NextGC", Value: float64(cms.NextGC), Types: "gauge"}
-	m.M["NumForcedGC"] = Metric{Name: "NumForcedGC", Value: float64(cms.NumForcedGC), Types: "gauge"}
-	m.M["NumGC"] = Metric{Name: "NumGC", Value: float64(cms.NumGC), Types: "gauge"}
-	m.M["OtherSys"] = Metric{Name: "OtherSys", Value: float64(cms.OtherSys), Types: "gauge"}
-	m.M["PauseTotalNs"] = Metric{Name: "PauseTotalNs", Value: float64(cms.PauseTotalNs), Types: "gauge"}
-	m.M["StackInuse"] = Metric{Name: "StackInuse", Value: float64(cms.StackInuse), Types: "gauge"}
-	m.M["StackSys"] = Metric{Name: "StackSys", Value: float64(cms.StackSys), Types: "gauge"}
-	m.M["Sys"] = Metric{Name: "Sys", Value: float64(cms.Sys), Types: "gauge"}
-	m.M["TotalAlloc"] = Metric{Name: "TotalAlloc", Value: float64(cms.TotalAlloc), Types: "gauge"}
-	m.M["RandomValue"] = Metric{Name: "RandomValue", Value: float64(rand.Intn(100)), Types: "gauge"}
-	m.M["PollCount"] = Metric{Name: "PollCount", Value: float64(counter), Types: "counter"}
+	val := reflect.ValueOf(cms).Elem()
+	for i := 0; i < val.NumField(); i++ {
+
+		t := "gauge"
+		n := val.Type().Field(i).Name
+		v := fmt.Sprint(val.FieldByName(val.Type().Field(i).Name))
+
+		M, status := NewMetric(t, n, v)
+		if status != "" {
+			log.Println(status)
+		}
+		m.M[val.Type().Field(i).Name] = *M
+	}
 }
 
 // WriteMetricJSON сериализует структуру Metric в JSON, и если всё отрабатывает

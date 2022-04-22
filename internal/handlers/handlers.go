@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"strconv"
 	"strings"
 
 	"github.com/labstack/echo/v4"
@@ -43,11 +42,6 @@ func (h *MyHandler) NotUSing() http.HandlerFunc {
 		if len(ms) != 3 {
 			http.Error(w, "", http.StatusNotFound)
 		}
-		v, err := strconv.ParseUint(ms[2], 10, 64)
-		if err != nil {
-			http.Error(w, "", http.StatusBadRequest)
-		}
-		s := metricscustom.Metric{Name: ms[1], Types: ms[0], Value: float64(v)}
 
 		file, err := database.New("metrics.json")
 		if err != nil {
@@ -69,21 +63,6 @@ func (h *MyHandler) NotUSing() http.HandlerFunc {
 		if err != nil {
 			log.Println(err)
 			return
-		}
-		var check bool
-		for _, v := range mp.M {
-			if v.Name == s.Name {
-				if v.Types == "counter" {
-					v.Value += s.Value
-				}
-				if v.Types == "gauge" {
-					v.Value = s.Value
-				}
-				check = true
-			}
-		}
-		if !check {
-			mp.M[s.Name] = s
 		}
 
 		js, err := json.MarshalIndent(mp.M, "", " ")
@@ -132,11 +111,11 @@ func (h *MyHandler) Update() echo.HandlerFunc {
 			}
 		}
 
-		fmt.Printf("New metric: %s %v %s\n\n\n", s.Name, s.Value, s.Types)
+		fmt.Printf("New metric: %s %v %s\n\n\n", s.ID, s.Value, s.MType)
 		h.s.Update(s)
 		fmt.Println("In Storage: ")
 		for k, v := range h.s.Mp.M {
-			fmt.Printf("	Metric:  %s\n	    Name:%s\n	    Value:%v\n	    Type:%s\n\n", k, v.Name, v.Value, v.Types)
+			fmt.Printf("	Metric:  %s\n	    Name:%s\n	    Value:%v\n	    Type:%s\n\n", k, v.ID, v.Value, v.MType)
 		}
 		return c.HTML(http.StatusOK, `"{"message":"Successful Metric Add/Update"}"`)
 	}
@@ -156,7 +135,7 @@ func (h *MyHandler) ShowMetric() echo.HandlerFunc {
 			return c.HTML(http.StatusNotFound, `"{"message":"Metric Not Found"}"`)
 		}
 
-		return c.HTML(http.StatusOK, fmt.Sprintf("%v", metric.Value))
+		return c.HTML(http.StatusOK, fmt.Sprintf("%v", &metric.Value))
 	}
 }
 

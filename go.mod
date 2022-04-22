@@ -3,7 +3,6 @@ module github.com/siestacloud/service-monitoring
 go 1.18
 
 require (
-	github.com/go-chi/chi v1.5.4
 	github.com/labstack/echo/v4 v4.7.2
 	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/viper v1.11.0

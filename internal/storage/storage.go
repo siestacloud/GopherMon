@@ -20,30 +20,30 @@ func New() *Storage {
 func (s *Storage) Update(m *metricscustom.Metric) bool {
 
 	for k, v := range s.Mp.M {
-		if v.Name == m.Name {
-			if v.Types == "counter" {
-				metr, status := metricscustom.NewMetric(m.Types, m.Name, fmt.Sprint(m.Value+v.Value))
+		if v.ID == m.ID {
+			if v.MType == "counter" {
+				metr, status := metricscustom.NewMetric(m.MType, m.ID, fmt.Sprint(v.Value))
 				if status != "" {
 					return false
 				}
 				s.Mp.M[k] = *metr
 
 			}
-			if v.Types == "gauge" {
+			if v.MType == "gauge" {
 				s.Mp.M[k] = *m
 			}
 			return true
 		}
 	}
-	s.Mp.M[m.Name] = *m
+	s.Mp.M[m.ID] = *m
 	return false
 }
 
 func (s *Storage) Take(t, n string) *metricscustom.Metric {
 
 	for k, v := range s.Mp.M {
-		if v.Name == n {
-			if v.Types == t {
+		if v.ID == n {
+			if v.MType == t {
 				m := s.Mp.M[k]
 				return &m
 			}

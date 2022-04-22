@@ -46,7 +46,7 @@ func takeMetrics(ctx context.Context, pollInterval time.Duration) {
 			// Получаем все метрики
 			runtime.ReadMemStats(&cms)
 			// Берем только нужные
-			cmp.Convert(ic, &cms)
+			cmp.AddMetrics(ic, &cms)
 			// Just encode to json and print
 			// b, _ := json.Marshal(cms)
 			// fmt.Println(string(b))
@@ -66,9 +66,13 @@ func postMetrics(ctx context.Context, reportInterval time.Duration) {
 }
 
 func url() {
+	// конструируем клиент
+	client := &http.Client{}
 	for _, v := range cmp.M {
-		url := fmt.Sprintf("http://localhost:8080/update/%s/%s/%v", v.Types, v.Name, int(v.Value))
-
+		url := fmt.Sprintf("http://localhost:8080/update/%s/%s/%v", v.MType, v.ID, v.Value)
+		if v.MType == "counter" {
+			url = fmt.Sprintf("http://localhost:8080/update/%s/%s/%v", v.MType, v.ID, v.Delta)
+		}
 		// конструируем запрос
 		request, err := http.NewRequest("POST", url, nil)
 		if err != nil {
@@ -76,8 +80,6 @@ func url() {
 		}
 		// устанавливаем заголовки
 		request.Header.Add("Content-Type", "text/plain")
-		// конструируем клиент
-		client := &http.Client{}
 		// отправляем запрос
 		resp, err := client.Do(request)
 		if err != nil {
@@ -94,8 +96,4 @@ func url() {
 		}
 	}
 
-}
-
-func HandleSignal(signal os.Signal) {
-	fmt.Println("HandleSignal() Received:", signal)
 }
