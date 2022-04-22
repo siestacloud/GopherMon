@@ -66,13 +66,16 @@ func postMetrics(ctx context.Context, reportInterval time.Duration) {
 }
 
 func url() {
-	// конструируем клиент
-	client := &http.Client{}
 	for _, v := range cmp.M {
-		url := fmt.Sprintf("http://localhost:8080/update/%s/%s/%v", v.MType, v.ID, v.Value)
+		var url string
 		if v.MType == "counter" {
 			url = fmt.Sprintf("http://localhost:8080/update/%s/%s/%v", v.MType, v.ID, v.Delta)
+			fmt.Println(url)
+		} else {
+			url = fmt.Sprintf("http://localhost:8080/update/%s/%s/%v", v.MType, v.ID, v.Value)
+			fmt.Println(url)
 		}
+
 		// конструируем запрос
 		request, err := http.NewRequest("POST", url, nil)
 		if err != nil {
@@ -80,13 +83,14 @@ func url() {
 		}
 		// устанавливаем заголовки
 		request.Header.Add("Content-Type", "text/plain")
+		// конструируем клиент
+		client := &http.Client{}
 		// отправляем запрос
 		resp, err := client.Do(request)
 		if err != nil {
 			fmt.Printf("Do %s\n\n", err)
 		}
 		if resp != nil {
-			defer resp.Body.Close()
 			b, err := io.ReadAll(resp.Body)
 			if err != nil {
 				fmt.Println(err)
@@ -94,6 +98,7 @@ func url() {
 			}
 			fmt.Printf("%v\n", string(b))
 		}
+		resp.Body.Close()
 	}
 
 }

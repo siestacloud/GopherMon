@@ -22,10 +22,12 @@ func (s *Storage) Update(m *metricscustom.Metric) bool {
 	for k, v := range s.Mp.M {
 		if v.ID == m.ID {
 			if v.MType == "counter" {
-				metr, status := metricscustom.NewMetric(m.MType, m.ID, fmt.Sprint(v.Value))
+				fmt.Println("Ok")
+				metr, status := metricscustom.NewMetric(m.MType, m.ID, fmt.Sprint(m.Delta))
 				if status != "" {
 					return false
 				}
+				fmt.Println(metr)
 				s.Mp.M[k] = *metr
 
 			}

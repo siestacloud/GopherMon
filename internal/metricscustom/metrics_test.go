@@ -38,17 +38,17 @@ func TestNewMetrics(t *testing.T) {
 		{
 			name:   "Test #1",
 			values: []string{"testMetric", "counter", "1"},
-			want:   Metric{ID: "testMetric", Value: &v, MType: "counter"},
+			want:   Metric{ID: "testMetric", Value: v, MType: "counter"},
 		},
 		{
 			name:   "Test #2",
 			values: []string{"metric2", "gauge", "123"},
-			want:   Metric{ID: "metric2", Value: &v2, MType: "gauge"},
+			want:   Metric{ID: "metric2", Value: v2, MType: "gauge"},
 		},
 		{
 			name:   "Test #3",
 			values: []string{"metrics3", "counter", "111"},
-			want:   Metric{ID: "metrics3", Value: &v3, MType: "counter"},
+			want:   Metric{ID: "metrics3", Value: v3, MType: "counter"},
 		},
 	}
 	for _, tt := range test {

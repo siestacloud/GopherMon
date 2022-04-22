@@ -111,11 +111,11 @@ func (h *MyHandler) Update() echo.HandlerFunc {
 			}
 		}
 
-		fmt.Printf("New metric: %s %v %s\n\n\n", s.ID, s.Value, s.MType)
+		fmt.Println("New metric: ", s)
 		h.s.Update(s)
 		fmt.Println("In Storage: ")
 		for k, v := range h.s.Mp.M {
-			fmt.Printf("	Metric:  %s\n	    Name:%s\n	    Value:%v\n	    Type:%s\n\n", k, v.ID, v.Value, v.MType)
+			fmt.Printf("	Metric:  %s\n	    Name:%s\n	    Value:%v\n		Delta:%v\n	    Type:%s\n\n", k, v.ID, v.Value, v.Delta, v.MType)
 		}
 		return c.HTML(http.StatusOK, `"{"message":"Successful Metric Add/Update"}"`)
 	}

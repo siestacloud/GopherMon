@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"math/rand"
 	"reflect"
 	"runtime"
@@ -26,35 +25,45 @@ func NewMetricsPool() *MetricsPool {
 }
 
 type Metric struct {
-	ID    string   `json:"id"`              // имя метрики
-	MType string   `json:"type"`            // параметр, принимающий значение gauge или counter
-	Delta *int64   `json:"delta,omitempty"` // значение метрики в случае передачи counter
-	Value *float64 `json:"value,omitempty"` // значение метрики в случае передачи gauge
+	ID    string  `json:"id"`              // имя метрики
+	MType string  `json:"type"`            // параметр, принимающий значение gauge или counter
+	Delta int64   `json:"delta,omitempty"` // значение метрики в случае передачи counter
+	Value float64 `json:"value,omitempty"` // значение метрики в случае передачи gauge
 }
 
-type Value struct{}
-
 func NewMetric(t, n, v string) (*Metric, string) {
-	fmt.Println("TYPE:  ", t)
-	if !checkType(t) {
-		fmt.Println("check")
-		return nil, "unknown metric type"
-	}
+	switch t {
+	case "counter":
+		V, err := strconv.ParseInt(v, 10, 64)
+		if err != nil {
 
-	V, err := strconv.ParseFloat(v, 64)
-	if err != nil {
-		return nil, "incorrect value"
+			return nil, "incorrect value"
+		}
+
+		return &Metric{
+			ID:    n,
+			MType: t,
+			Delta: V,
+		}, ""
+
+	case "gauge":
+		V, err := strconv.ParseFloat(v, 64)
+		if err != nil {
+			return nil, "incorrect value"
+		}
+		return &Metric{
+			ID:    n,
+			MType: t,
+			Value: V,
+		}, ""
 	}
-	return &Metric{
-		ID:    n,
-		MType: t,
-		Value: &V,
-	}, ""
+	return nil, "unknown metric type"
 }
 
 func (m *MetricsPool) AddMetrics(counter int64, cms *runtime.MemStats) {
+
 	rand.Seed(time.Now().UTC().UnixNano())
-	m.M["PollCount"] = Metric{ID: "PollCount", Delta: &counter, MType: "counter"}
+	m.M["PollCount"] = Metric{ID: "PollCount", Delta: counter, MType: "counter"}
 
 	val := reflect.ValueOf(cms).Elem()
 	for i := 0; i < val.NumField(); i++ {
@@ -65,8 +74,10 @@ func (m *MetricsPool) AddMetrics(counter int64, cms *runtime.MemStats) {
 
 		M, status := NewMetric(t, n, v)
 		if status != "" {
-			log.Println(status)
+
+			continue
 		}
+
 		m.M[val.Type().Field(i).Name] = *M
 	}
 }
@@ -95,14 +106,4 @@ func (m *MetricsPool) ReadMetricsJSON(r io.Reader) error {
 	}
 	fmt.Println("ReadMetricJSON", m)
 	return nil
-}
-
-func checkType(s string) bool {
-	var types = []string{"gauge", "counter"}
-	for _, v := range types {
-		if s == v {
-			return true
-		}
-	}
-	return false
 }
