@@ -15,7 +15,7 @@ import (
 )
 
 var (
-	cms runtime.MemStats //обьект обертка над runtime.MemStats
+	cms runtime.MemStats
 	cmp = metricscustom.NewMetricsPool()
 )
 

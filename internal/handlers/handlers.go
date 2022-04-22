@@ -135,7 +135,7 @@ func (h *MyHandler) ShowMetric() echo.HandlerFunc {
 			return c.HTML(http.StatusNotFound, `"{"message":"Metric Not Found"}"`)
 		}
 
-		return c.HTML(http.StatusOK, fmt.Sprintf("%v", &metric.Value))
+		return c.HTML(http.StatusOK, fmt.Sprintf("%v", metric.Value))
 	}
 }
 
