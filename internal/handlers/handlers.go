@@ -24,8 +24,8 @@ func New() *MyHandler {
 	}
 }
 
-//handleUpload upload file /upload
-func (h *MyHandler) HandleUpdate() http.HandlerFunc {
+//test NOT USEING
+func (h *MyHandler) NotUSing() http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
@@ -47,7 +47,7 @@ func (h *MyHandler) HandleUpdate() http.HandlerFunc {
 		if err != nil {
 			http.Error(w, "", http.StatusBadRequest)
 		}
-		s := metricscustom.Metric{Name: ms[1], Types: ms[0], Value: v}
+		s := metricscustom.Metric{Name: ms[1], Types: ms[0], Value: float64(v)}
 
 		file, err := database.New("metrics.json")
 		if err != nil {
@@ -110,35 +110,35 @@ func (h *MyHandler) HandleUpdate() http.HandlerFunc {
 func (h *MyHandler) Update() echo.HandlerFunc {
 
 	return func(c echo.Context) error {
-		fmt.Println("New request on: ")
+		fmt.Println("New request on: ", c.Request().URL.Path)
 		if c.Request().Method != http.MethodPost {
-			return c.HTML(http.StatusMethodNotAllowed, "")
+			return c.HTML(http.StatusMethodNotAllowed, `"{"message":"Method Not Allowed"}"`)
 		}
 		defer c.Request().Body.Close()
 
-		m := strings.ReplaceAll(c.Request().URL.Path, "/update/", "")
-		ms := strings.Split(m, "/")
-		fmt.Println(ms)
-		if len(ms) != 3 {
-			return c.HTML(http.StatusNotFound, "")
-		}
-		v, err := strconv.ParseUint(ms[2], 10, 64)
-		if err != nil {
-			return c.HTML(http.StatusBadRequest, "")
-		}
+		t := c.Param("type")
+		n := c.Param("name")
+		v := c.Param("value")
 
-		if !checkType(ms[0]) {
-			return c.HTML(http.StatusNotImplemented, "")
+		s, status := metricscustom.NewMetric(t, n, v)
+		if status != "" {
+			switch status {
+			case "unknown metric type":
+				return c.HTML(http.StatusNotImplemented, `"{"message":"Unknown Metric Type"}"`)
+			case "incorrect value":
+				return c.HTML(http.StatusBadRequest, `"{"message":"Incorrect Metric Value"}"`)
+			default:
+				return c.HTML(http.StatusBadRequest, `"{"message":"Incorrect Metric"}"`)
+			}
 		}
-		s := metricscustom.Metric{Name: ms[1], Types: ms[0], Value: v}
 
 		fmt.Printf("New metric: %s %v %s\n\n\n", s.Name, s.Value, s.Types)
-		h.s.Update(&s)
+		h.s.Update(s)
 		fmt.Println("In Storage: ")
 		for k, v := range h.s.Mp.M {
 			fmt.Printf("	Metric:  %s\n	    Name:%s\n	    Value:%v\n	    Type:%s\n\n", k, v.Name, v.Value, v.Types)
 		}
-		return c.HTML(http.StatusOK, "")
+		return c.HTML(http.StatusOK, `"{"message":"Successful Metric Add/Update"}"`)
 	}
 }
 
@@ -146,14 +146,14 @@ func (h *MyHandler) Update() echo.HandlerFunc {
 func (h *MyHandler) ShowMetric() echo.HandlerFunc {
 
 	return func(c echo.Context) error {
-		fmt.Println("New request on: ")
+		fmt.Println("New request on: ", c.Request().URL.Path)
 
 		defer c.Request().Body.Close()
 		t := c.Param("type")
 		n := c.Param("name")
 		metric := h.s.Take(t, n)
 		if metric == nil {
-			return c.HTML(http.StatusNotFound, "")
+			return c.HTML(http.StatusNotFound, `"{"message":"Metric Not Found"}"`)
 		}
 
 		return c.HTML(http.StatusOK, fmt.Sprintf("%v", metric.Value))
@@ -164,7 +164,7 @@ func (h *MyHandler) ShowMetric() echo.HandlerFunc {
 func (h *MyHandler) ShowAllMetrics() echo.HandlerFunc {
 
 	return func(c echo.Context) error {
-		fmt.Println("New request on: ")
+		fmt.Println("New request on: ", c.Request().URL.Path)
 
 		defer c.Request().Body.Close()
 
@@ -175,14 +175,4 @@ func (h *MyHandler) ShowAllMetrics() echo.HandlerFunc {
 
 		return c.HTML(http.StatusOK, string(mp))
 	}
-}
-
-func checkType(s string) bool {
-	var types = []string{"gauge", "counter"}
-	for _, v := range types {
-		if s == v {
-			return true
-		}
-	}
-	return false
 }

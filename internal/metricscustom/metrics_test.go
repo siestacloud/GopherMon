@@ -48,9 +48,9 @@ func TestNewMetrics(t *testing.T) {
 		},
 	}
 	for _, tt := range test {
-		m, err := NewMetric(tt.values[1], tt.values[0], tt.values[2])
-		if err != nil {
-			fmt.Println(err)
+		m, status := NewMetric(tt.values[1], tt.values[0], tt.values[2])
+		if status != "" {
+			fmt.Println(status)
 		}
 		assert.Equal(t, tt.want, *m)
 	}
