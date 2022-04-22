@@ -23,7 +23,7 @@ func (s *Storage) Update(m *metricscustom.Metric) bool {
 		if v.ID == m.ID {
 			if v.MType == "counter" {
 				fmt.Println("Ok")
-				metr, status := metricscustom.NewMetric(m.MType, m.ID, fmt.Sprint(m.Delta))
+				metr, status := metricscustom.NewMetric(m.MType, m.ID, fmt.Sprint(m.Delta+v.Delta))
 				if status != "" {
 					return false
 				}
