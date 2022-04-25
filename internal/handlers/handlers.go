@@ -117,12 +117,12 @@ func (h *MyHandler) Update() echo.HandlerFunc {
 }
 
 //Update upload file /upload
-func (h *MyHandler) UpdateJson() echo.HandlerFunc {
+func (h *MyHandler) UpdateJSON() echo.HandlerFunc {
 
 	return func(c echo.Context) error {
 		fmt.Println("New request on: ", c.Request().URL.Path)
 		if c.Request().Method != http.MethodPost {
-
+			return c.HTML(http.StatusMethodNotAllowed, `"{"message":"Method Not Allowed"}"`)
 		}
 		defer c.Request().Body.Close()
 		m := metricscustom.Metric{}
