@@ -68,8 +68,9 @@ func postMetrics(ctx context.Context, reportInterval time.Duration) {
 }
 
 func url() {
+	var buf bytes.Buffer
 	for _, metric := range cmp.M {
-		var buf bytes.Buffer
+
 		err := metric.MarshalMetricsinJSON(&buf)
 		if err != nil {
 			log.Fatal(err)
@@ -96,7 +97,6 @@ func url() {
 				continue
 			}
 			fmt.Printf("%v\n", string(b))
-			resp.Body.Close()
 			continue
 		}
 
