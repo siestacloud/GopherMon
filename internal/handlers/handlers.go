@@ -76,13 +76,7 @@ func (h *MyHandler) NotUSing() http.HandlerFunc {
 			log.Printf("ERR %s", err)
 			return
 		}
-		// if err = mp.WriteMetricJSON(file.F); err != nil {hk
-		// 	http.Error(w, "Unable write metrics", http.StatusMethodNotAllowed)
-		// 	return
-		// }
-		// fmt.Println(file.F.Name())
 
-		// http://<АДРЕС_СЕРВЕРА>/update/<ТИП_МЕТРИКИ>/<ИМЯ_МЕТРИКИ>/<ЗНАЧЕНИЕ_МЕТРИКИ>;
 	}
 }
 
