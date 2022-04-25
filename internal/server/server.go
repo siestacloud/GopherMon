@@ -104,6 +104,7 @@ func (s *APIServer) configureLogger() error {
 //configureRouter Set handlers for URL path's
 func (s *APIServer) configureEchoRouter() {
 	s.e.POST("/update/:type/:name/:value", s.handlers.Update())
+	s.e.POST("/update/", s.handlers.UpdateJson())
 	s.e.GET("/value/:type/:name", s.handlers.ShowMetric())
 	s.e.GET("/", s.handlers.ShowAllMetrics())
 	// Prometheus endpoint

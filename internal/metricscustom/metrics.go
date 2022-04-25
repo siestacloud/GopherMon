@@ -61,10 +61,27 @@ func NewMetric(t, n, v string) (*Metric, string) {
 	return nil, "unknown metric type"
 }
 
-func (m *MetricsPool) AddMetrics(counter int64, cms *runtime.MemStats) {
+func (m *Metric) Check() string {
+	switch m.MType {
+	case "counter":
+		if m.Value != 0 {
+			return "incorrect value"
+		}
+		return ""
+
+	case "gauge":
+		if m.Delta != 0 {
+			return "incorrect value"
+		}
+		return ""
+	}
+	return "unknown metric type"
+}
+
+func (mp *MetricsPool) AddMetrics(counter int64, cms *runtime.MemStats) {
 
 	rand.Seed(time.Now().UTC().UnixNano())
-	m.M["PollCount"] = Metric{ID: "PollCount", Delta: counter, MType: "counter"}
+	mp.M["PollCount"] = Metric{ID: "PollCount", Delta: counter, MType: "counter"}
 
 	val := reflect.ValueOf(cms).Elem()
 	for i := 0; i < val.NumField(); i++ {
@@ -79,18 +96,17 @@ func (m *MetricsPool) AddMetrics(counter int64, cms *runtime.MemStats) {
 			continue
 		}
 
-		m.M[val.Type().Field(i).Name] = *M
+		mp.M[val.Type().Field(i).Name] = *M
 	}
 }
 
 // WriteMetricJSON сериализует структуру Metric в JSON, и если всё отрабатывает
 // успешно, то вызывается соответствующий метод Write() из io.Writer.
-func (m *MetricsPool) WriteMetricsJSON(w io.Writer) error {
-	js, err := json.MarshalIndent(m.M, "", "	")
+func (m *Metric) MarshalMetricsinJSON(w io.Writer) error {
+	js, err := json.MarshalIndent(m, "", "	")
 	if err != nil {
 		return err
 	}
-
 	_, err = w.Write(js)
 	return err
 }

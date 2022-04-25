@@ -1,9 +1,11 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -66,18 +68,15 @@ func postMetrics(ctx context.Context, reportInterval time.Duration) {
 }
 
 func url() {
-	for _, v := range cmp.M {
-		var url string
-		if v.MType == "counter" {
-			url = fmt.Sprintf("http://localhost:8080/update/%s/%s/%v", v.MType, v.ID, v.Delta)
-			fmt.Println(url)
-		} else {
-			url = fmt.Sprintf("http://localhost:8080/update/%s/%s/%v", v.MType, v.ID, v.Value)
-			fmt.Println(url)
-		}
+	var buf bytes.Buffer
+	for _, metric := range cmp.M {
 
+		err := metric.MarshalMetricsinJSON(&buf)
+		if err != nil {
+			log.Fatal(err)
+		}
 		// конструируем запрос
-		request, err := http.NewRequest("POST", url, nil)
+		request, err := http.NewRequest("POST", "http://localhost:8080/update/", &buf)
 		if err != nil {
 			fmt.Printf("Request %s\n\n", err)
 		}
@@ -89,16 +88,18 @@ func url() {
 		resp, err := client.Do(request)
 		if err != nil {
 			fmt.Printf("Do %s\n\n", err)
+			continue
 		}
 		if resp != nil {
 			b, err := io.ReadAll(resp.Body)
 			if err != nil {
 				fmt.Println(err)
-				return
+				continue
 			}
 			fmt.Printf("%v\n", string(b))
+			continue
 		}
-		resp.Body.Close()
+
 	}
 
 }
