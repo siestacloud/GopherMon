@@ -88,7 +88,7 @@ func url() {
 		resp, err := client.Do(request)
 		if err != nil {
 			fmt.Printf("Do %s\n\n", err)
-			continue
+			break
 		}
 		if resp != nil {
 			b, err := io.ReadAll(resp.Body)
