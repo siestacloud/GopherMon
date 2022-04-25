@@ -97,6 +97,7 @@ func url() {
 				continue
 			}
 			fmt.Printf("%v\n", string(b))
+			resp.Body.Close()
 			continue
 		}
 
