@@ -127,6 +127,7 @@ func (h *MyHandler) UpdateJson() echo.HandlerFunc {
 
 	return func(c echo.Context) error {
 		fmt.Println("New request on: ", c.Request().URL.Path)
+		c.Response().Header().Add("Content-Type", "application/json")
 		if c.Request().Method != http.MethodPost {
 
 		}
@@ -200,6 +201,7 @@ func (h *MyHandler) ShowAllMetrics() echo.HandlerFunc {
 func (h *MyHandler) ShowMetricJSON() echo.HandlerFunc {
 
 	return func(c echo.Context) error {
+		c.Response().Header().Add("Content-Type", "application/json")
 		fmt.Println("New request on: ", c.Request().URL.Path)
 		if c.Request().Method != http.MethodPost {
 			return c.HTML(http.StatusBadRequest, `"{"message":"Only POST method allowed"}"`)
@@ -210,12 +212,10 @@ func (h *MyHandler) ShowMetricJSON() echo.HandlerFunc {
 			log.Println(err)
 			return c.HTML(http.StatusBadRequest, `"{"message":"Incorrect metric"}"`)
 		}
-
 		metric := h.s.Take(m.MType, m.ID)
 		if metric == nil {
 			return c.HTML(http.StatusNotFound, `"{"message":"Metric Not Found"}"`)
 		}
-
 		var buf bytes.Buffer
 		err := metric.MarshalMetricsinJSON(&buf)
 		if err != nil {
@@ -223,7 +223,6 @@ func (h *MyHandler) ShowMetricJSON() echo.HandlerFunc {
 			return c.HTML(http.StatusBadRequest, `"{"message":"Unable marshal metric"}"`)
 
 		}
-		c.Response().Header().Add("Content-Type", "application/json")
 		return c.HTML(http.StatusOK, buf.String())
 	}
 }
