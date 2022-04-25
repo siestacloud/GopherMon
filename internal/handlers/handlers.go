@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -210,15 +211,17 @@ func (h *MyHandler) ShowMetricJSON() echo.HandlerFunc {
 			return c.HTML(http.StatusBadRequest, `"{"message":"Incorrect metric"}"`)
 		}
 
-		status := m.Check()
+		status := m.Find(h.s.Mp)
 		if status != "" {
 			switch status {
 			case "unknown metric type":
 				return c.HTML(http.StatusNotImplemented, `"{"message":"Unknown Metric Type"}"`)
-			case "incorrect value":
-				return c.HTML(http.StatusBadRequest, `"{"message":"Incorrect Metric Value"}"`)
+			case "metric not found":
+				return c.HTML(http.StatusBadRequest, `"{"message":"metric not found"}"`)
+			case "metrics found but type incorrect":
+				return c.HTML(http.StatusBadRequest, `"{"message":"metrics found but type incorrect"}"`)
 			default:
-				return c.HTML(http.StatusBadRequest, `"{"message":"Incorrect Metric"}"`)
+				return c.HTML(http.StatusBadRequest, `"{"message":"Invalid metric"}"`)
 			}
 		}
 
@@ -228,6 +231,13 @@ func (h *MyHandler) ShowMetricJSON() echo.HandlerFunc {
 		for k, v := range h.s.Mp.M {
 			fmt.Printf("	Metric:  %s\n	    Name:%s\n	    Value:%v\n		Delta:%v\n	    Type:%s\n\n", k, v.ID, v.Value, v.Delta, v.MType)
 		}
-		return c.HTML(http.StatusOK, `"{"message":"Successful Metric Add/Update"}"`)
+		var buf bytes.Buffer
+		err := m.MarshalMetricsinJSON(&buf)
+		if err != nil {
+			log.Panicln(err)
+			return c.HTML(http.StatusBadRequest, `"{"message":"Unable marshal metric"}"`)
+
+		}
+		return c.HTML(http.StatusOK, buf.String())
 	}
 }

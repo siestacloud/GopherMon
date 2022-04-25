@@ -78,6 +78,26 @@ func (m *Metric) Check() string {
 	return "unknown metric type"
 }
 
+func (m *Metric) Find(mp *MetricsPool) string {
+	for _, v := range mp.M {
+		if v.ID == m.ID {
+			if v.MType == m.MType {
+				switch m.MType {
+				case "counter":
+					m.Delta = v.Delta
+					return ""
+				case "gauge":
+					m.Value = v.Value
+					return ""
+				}
+				return "unknown metric type"
+			}
+			return "metrics found but type incorrect"
+		}
+	}
+	return "metric not found"
+}
+
 func (mp *MetricsPool) AddMetrics(counter int64, cms *runtime.MemStats) {
 
 	rand.Seed(time.Now().UTC().UnixNano())
