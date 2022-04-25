@@ -86,7 +86,7 @@ func (h *MyHandler) NotUSing() http.HandlerFunc {
 	}
 }
 
-//Update upload file /upload
+//Update upload file /upload.
 func (h *MyHandler) Update() echo.HandlerFunc {
 
 	return func(c echo.Context) error {
