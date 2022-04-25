@@ -223,6 +223,7 @@ func (h *MyHandler) ShowMetricJSON() echo.HandlerFunc {
 			return c.HTML(http.StatusBadRequest, `"{"message":"Unable marshal metric"}"`)
 
 		}
+		c.Response().Header().Add("Content-Type", "application/json")
 		return c.HTML(http.StatusOK, buf.String())
 	}
 }

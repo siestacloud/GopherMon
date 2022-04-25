@@ -80,7 +80,7 @@ func url() {
 			fmt.Printf("Request %s\n\n", err)
 		}
 		// устанавливаем заголовки
-		request.Header.Add("Content-Type", "text/plain")
+		request.Header.Add("Content-Type", "application/json")
 		// конструируем клиент
 		client := &http.Client{}
 		// отправляем запрос

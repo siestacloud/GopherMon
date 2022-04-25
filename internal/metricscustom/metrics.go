@@ -98,10 +98,10 @@ func (m *Metric) Find(mp *MetricsPool) string {
 	return "metric not found"
 }
 
-func (mp *MetricsPool) AddMetrics(counter int64, cms *runtime.MemStats) {
+func (m *MetricsPool) AddMetrics(counter int64, cms *runtime.MemStats) {
 
 	rand.Seed(time.Now().UTC().UnixNano())
-	mp.M["PollCount"] = Metric{ID: "PollCount", Delta: counter, MType: "counter"}
+	m.M["PollCount"] = Metric{ID: "PollCount", Delta: counter, MType: "counter"}
 
 	val := reflect.ValueOf(cms).Elem()
 	for i := 0; i < val.NumField(); i++ {
@@ -116,7 +116,7 @@ func (mp *MetricsPool) AddMetrics(counter int64, cms *runtime.MemStats) {
 			continue
 		}
 
-		mp.M[val.Type().Field(i).Name] = *M
+		m.M[val.Type().Field(i).Name] = *M
 	}
 }
 
