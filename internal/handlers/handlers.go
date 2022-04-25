@@ -152,10 +152,8 @@ func (h *MyHandler) UpdateJson() echo.HandlerFunc {
 
 		fmt.Println("New metric: ", m)
 		h.s.Update(&m)
-		fmt.Println("In Storage: ")
-		for k, v := range h.s.Mp.M {
-			fmt.Printf("	Metric:  %s\n	    Name:%s\n	    Value:%v\n		Delta:%v\n	    Type:%s\n\n", k, v.ID, v.Value, v.Delta, v.MType)
-		}
+		fmt.Println("In Storage: ", h.s.Mp.M[m.ID])
+
 		return c.HTML(http.StatusOK, `"{"message":"Successful Metric Add/Update"}"`)
 	}
 }

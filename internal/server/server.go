@@ -109,6 +109,7 @@ func (s *APIServer) configureEchoRouter() {
 	s.e.POST("/value/", s.handlers.ShowMetricJSON())
 
 	s.e.GET("/", s.handlers.ShowAllMetrics())
+
 	// Prometheus endpoint
 	// s.e.Use(middleware.Logger())
 	// s.e.Use(middleware.Recover())
