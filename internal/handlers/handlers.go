@@ -80,7 +80,7 @@ func (h *MyHandler) NotUSing() http.HandlerFunc {
 	}
 }
 
-//Update upload file /upload..
+//Update POST update/:type/:name/:value
 func (h *MyHandler) Update() echo.HandlerFunc {
 
 	return func(c echo.Context) error {
@@ -116,22 +116,22 @@ func (h *MyHandler) Update() echo.HandlerFunc {
 	}
 }
 
-//Update upload file /upload
+//   POST /update/
 func (h *MyHandler) UpdateJSON() echo.HandlerFunc {
 
 	return func(c echo.Context) error {
 		fmt.Println("New request on: ", c.Request().URL.Path)
+		c.Response().Header().Add("Content-Type", "application/json")
 		if c.Request().Method != http.MethodPost {
 			return c.HTML(http.StatusMethodNotAllowed, `"{"message":"Method Not Allowed"}"`)
 		}
 		defer c.Request().Body.Close()
 		m := metricscustom.Metric{}
 		if err := json.NewDecoder(c.Request().Body).Decode(&m); err != nil {
-			log.Println(err)
+			log.Println("Unable decode JSON", err)
 			return c.HTML(http.StatusBadRequest, `"{"message":"Incorrect metric"}"`)
 		}
 
-		c.Response().Header().Add("Content-Type", "application/json")
 		status := m.Check()
 		if status != "" {
 			switch status {
@@ -144,17 +144,14 @@ func (h *MyHandler) UpdateJSON() echo.HandlerFunc {
 			}
 		}
 
-		fmt.Println("New metric: ", m)
+		fmt.Println("Metric from request: ", m)
 		h.s.Update(&m)
-		fmt.Println("In Storage: ")
-		for k, v := range h.s.Mp.M {
-			fmt.Printf("	Metric:  %s\n	    Name:%s\n	    Value:%v\n		Delta:%v\n	    Type:%s\n\n", k, v.ID, v.Value, v.Delta, v.MType)
-		}
+		fmt.Println("Metric from storage: ", h.s.Mp.M[m.ID])
 		return c.HTML(http.StatusOK, `"{"message":"Successful Metric Add/Update"}"`)
 	}
 }
 
-// GET http://<АДРЕС_СЕРВЕРА>/value/<ТИП_МЕТРИКИ>/<ИМЯ_МЕТРИКИ>
+// GET /value/:type/:name
 func (h *MyHandler) ShowMetric() echo.HandlerFunc {
 
 	return func(c echo.Context) error {
@@ -174,7 +171,7 @@ func (h *MyHandler) ShowMetric() echo.HandlerFunc {
 	}
 }
 
-// GET http://<АДРЕС_СЕРВЕРА>/value/<ТИП_МЕТРИКИ>/<ИМЯ_МЕТРИКИ>
+// GET /
 func (h *MyHandler) ShowAllMetrics() echo.HandlerFunc {
 
 	return func(c echo.Context) error {
@@ -191,7 +188,7 @@ func (h *MyHandler) ShowAllMetrics() echo.HandlerFunc {
 	}
 }
 
-//Update upload file /upload
+//  POST /value/
 func (h *MyHandler) ShowMetricJSON() echo.HandlerFunc {
 
 	return func(c echo.Context) error {
