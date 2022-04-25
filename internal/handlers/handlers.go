@@ -127,7 +127,6 @@ func (h *MyHandler) UpdateJson() echo.HandlerFunc {
 
 	return func(c echo.Context) error {
 		fmt.Println("New request on: ", c.Request().URL.Path)
-		c.Response().Header().Add("Content-Type", "application/json")
 		if c.Request().Method != http.MethodPost {
 
 		}
@@ -138,6 +137,7 @@ func (h *MyHandler) UpdateJson() echo.HandlerFunc {
 			return c.HTML(http.StatusBadRequest, `"{"message":"Incorrect metric"}"`)
 		}
 
+		c.Response().Header().Add("Content-Type", "application/json")
 		status := m.Check()
 		if status != "" {
 			switch status {
@@ -152,8 +152,10 @@ func (h *MyHandler) UpdateJson() echo.HandlerFunc {
 
 		fmt.Println("New metric: ", m)
 		h.s.Update(&m)
-		fmt.Println("In Storage: ", h.s.Mp.M[m.ID])
-
+		fmt.Println("In Storage: ")
+		for k, v := range h.s.Mp.M {
+			fmt.Printf("	Metric:  %s\n	    Name:%s\n	    Value:%v\n		Delta:%v\n	    Type:%s\n\n", k, v.ID, v.Value, v.Delta, v.MType)
+		}
 		return c.HTML(http.StatusOK, `"{"message":"Successful Metric Add/Update"}"`)
 	}
 }
