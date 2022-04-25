@@ -194,3 +194,40 @@ func (h *MyHandler) ShowAllMetrics() echo.HandlerFunc {
 		return c.HTML(http.StatusOK, string(mp))
 	}
 }
+
+//Update upload file /upload
+func (h *MyHandler) ShowMetricJSON() echo.HandlerFunc {
+
+	return func(c echo.Context) error {
+		fmt.Println("New request on: ", c.Request().URL.Path)
+		if c.Request().Method != http.MethodGet {
+			return c.HTML(http.StatusBadRequest, `"{"message":"Only GET method allowed"}"`)
+		}
+		defer c.Request().Body.Close()
+		m := metricscustom.Metric{}
+		if err := json.NewDecoder(c.Request().Body).Decode(&m); err != nil {
+			log.Println(err)
+			return c.HTML(http.StatusBadRequest, `"{"message":"Incorrect metric"}"`)
+		}
+
+		status := m.Check()
+		if status != "" {
+			switch status {
+			case "unknown metric type":
+				return c.HTML(http.StatusNotImplemented, `"{"message":"Unknown Metric Type"}"`)
+			case "incorrect value":
+				return c.HTML(http.StatusBadRequest, `"{"message":"Incorrect Metric Value"}"`)
+			default:
+				return c.HTML(http.StatusBadRequest, `"{"message":"Incorrect Metric"}"`)
+			}
+		}
+
+		fmt.Println("New metric: ", m)
+		h.s.Update(&m)
+		fmt.Println("In Storage: ")
+		for k, v := range h.s.Mp.M {
+			fmt.Printf("	Metric:  %s\n	    Name:%s\n	    Value:%v\n		Delta:%v\n	    Type:%s\n\n", k, v.ID, v.Value, v.Delta, v.MType)
+		}
+		return c.HTML(http.StatusOK, `"{"message":"Successful Metric Add/Update"}"`)
+	}
+}
