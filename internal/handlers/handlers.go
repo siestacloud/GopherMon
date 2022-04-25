@@ -201,8 +201,8 @@ func (h *MyHandler) ShowMetricJSON() echo.HandlerFunc {
 
 	return func(c echo.Context) error {
 		fmt.Println("New request on: ", c.Request().URL.Path)
-		if c.Request().Method != http.MethodGet {
-			return c.HTML(http.StatusBadRequest, `"{"message":"Only GET method allowed"}"`)
+		if c.Request().Method != http.MethodPost {
+			return c.HTML(http.StatusBadRequest, `"{"message":"Only POST method allowed"}"`)
 		}
 		defer c.Request().Body.Close()
 		m := metricscustom.Metric{}
