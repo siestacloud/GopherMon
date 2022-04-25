@@ -76,7 +76,7 @@ func (h *MyHandler) NotUSing() http.HandlerFunc {
 			log.Printf("ERR %s", err)
 			return
 		}
-		// if err = mp.WriteMetricJSON(file.F); err != nil {h
+		// if err = mp.WriteMetricJSON(file.F); err != nil {hk
 		// 	http.Error(w, "Unable write metrics", http.StatusMethodNotAllowed)
 		// 	return
 		// }
