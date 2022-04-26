@@ -197,7 +197,7 @@ func (h *MyHandler) ShowAllMetrics() echo.HandlerFunc {
 func (h *MyHandler) ShowMetricJSON() echo.HandlerFunc {
 
 	return func(c echo.Context) error {
-		fmt.Println("New request on: ", c.Request().URL.Path)
+		log.Println("New request on: ", c.Request().URL.Path)
 		c.Response().Header().Add("Content-Type", "application/json")
 		if c.Request().Method != http.MethodPost {
 			return c.HTML(http.StatusMethodNotAllowed, `"{"message":"Method Not Allowed"}"`)
@@ -210,6 +210,7 @@ func (h *MyHandler) ShowMetricJSON() echo.HandlerFunc {
 		// }
 
 		message, _ := ioutil.ReadAll(c.Request().Body)
+		log.Println("In request body: ", string(message))
 		err := json.Unmarshal([]byte(string(message)), &m)
 		if err != nil {
 			log.Println("Unable decode JSON", err)
