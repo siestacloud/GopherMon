@@ -71,8 +71,9 @@ func postMetrics(ctx context.Context, reportInterval time.Duration) {
 
 func url() {
 	var buf bytes.Buffer
+	// конструируем клиент
+	client := &http.Client{}
 	for _, metric := range cmp.M {
-
 		err := metric.MarshalMetricsinJSON(&buf)
 		if err != nil {
 			log.Fatal(err)
@@ -85,8 +86,6 @@ func url() {
 		}
 		// устанавливаем заголовки
 		request.Header.Add("Content-Type", "application/json")
-		// конструируем клиент
-		client := &http.Client{}
 		// отправляем запрос
 		resp, err := client.Do(request)
 		if err != nil {

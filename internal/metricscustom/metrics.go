@@ -105,9 +105,14 @@ func (m *MetricsPool) AddMetrics(counter int64, cms *runtime.MemStats) {
 	rand.Seed(time.Now().UTC().UnixNano())
 	m.M["PollCount"] = Metric{ID: "PollCount", Delta: counter, MType: "counter"}
 
+	// val := reflect.ValueOf(cms).Elem()
+	// n := val.Type().Field(0).Name
+	// v := fmt.Sprint(val.FieldByName(val.Type().Field(0).Name))
+	// M, _ := NewMetric("gauge", n, v)
+	// m.M[M.ID] = *M
+
 	val := reflect.ValueOf(cms).Elem()
 	for i := 0; i < val.NumField(); i++ {
-
 		t := "gauge"
 		n := val.Type().Field(i).Name
 		v := fmt.Sprint(val.FieldByName(val.Type().Field(i).Name))
@@ -124,7 +129,7 @@ func (m *MetricsPool) AddMetrics(counter int64, cms *runtime.MemStats) {
 // WriteMetricJSON сериализует структуру Metric в JSON, и если всё отрабатывает
 // успешно, то вызывается соответствующий метод Write() из io.Writer.
 func (m *Metric) MarshalMetricsinJSON(w io.Writer) error {
-	js, err := json.MarshalIndent(m, "", "	")
+	js, err := json.Marshal(m)
 	if err != nil {
 		return err
 	}
