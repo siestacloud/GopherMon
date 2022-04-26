@@ -70,10 +70,10 @@ func postMetrics(ctx context.Context, reportInterval time.Duration) {
 }
 
 func url() {
-	var buf bytes.Buffer
 	// конструируем клиент
 	client := &http.Client{}
 	for _, metric := range cmp.M {
+		var buf bytes.Buffer
 		err := metric.MarshalMetricsinJSON(&buf)
 		if err != nil {
 			log.Fatal(err)
@@ -90,7 +90,7 @@ func url() {
 		resp, err := client.Do(request)
 		if err != nil {
 			fmt.Printf("Do %s\n\n", err)
-			break
+			continue
 		}
 		if resp != nil {
 			b, err := io.ReadAll(resp.Body)
