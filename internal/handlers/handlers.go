@@ -219,10 +219,6 @@ func (h *MyHandler) ShowMetricJSON() echo.HandlerFunc {
 		defer c.Request().Body.Close()
 
 		metric := h.s.Take(m.MType, m.ID)
-		if metric == nil {
-			log.Println("m not found")
-			return c.HTML(http.StatusNotFound, "")
-		}
 		var buf bytes.Buffer
 		err = metric.MarshalMetricsinJSON(&buf)
 		if err != nil {
