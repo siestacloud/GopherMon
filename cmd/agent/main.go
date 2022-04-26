@@ -74,9 +74,7 @@ func url() {
 	// конструируем клиент
 	client := &http.Client{}
 	for _, metric := range cmp.M {
-		if metric.Value == 0 {
-			continue
-		}
+
 		var buf bytes.Buffer
 		err := metric.MarshalMetricsinJSON(&buf)
 		if err != nil {
