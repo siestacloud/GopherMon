@@ -41,7 +41,7 @@ func (s *Storage) Update(m *metricscustom.Metric) bool {
 	return false
 }
 
-//
+//.
 func (s *Storage) Take(t, n string) *metricscustom.Metric {
 
 	for k, v := range s.Mp.M {
