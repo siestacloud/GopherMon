@@ -69,6 +69,7 @@ func postMetrics(ctx context.Context, reportInterval time.Duration) {
 	}
 }
 
+//
 func url() {
 	// конструируем клиент
 	client := &http.Client{}
