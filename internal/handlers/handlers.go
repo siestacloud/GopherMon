@@ -147,7 +147,7 @@ func (h *MyHandler) UpdateJSON() echo.HandlerFunc {
 		fmt.Println("Metric from request: ", m)
 		h.s.Update(&m)
 		fmt.Println("Metric from storage: ", h.s.Mp.M[m.ID])
-		return c.HTML(http.StatusOK, `"{"message":"Successful Metric Add/Update"}"`)
+		return c.HTML(http.StatusOK, `"{"message":"Successful Metric Add/Update json"}"`)
 	}
 }
 

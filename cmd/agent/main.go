@@ -49,6 +49,8 @@ func takeMetrics(ctx context.Context, pollInterval time.Duration) {
 			runtime.ReadMemStats(&cms)
 			// Берем только нужные
 			cmp.AddMetrics(ic, &cms)
+			fmt.Printf("%v\n%v\n\n", cms.HeapReleased, cmp.M)
+
 			// Just encode to json and print
 			// b, _ := json.Marshal(cms)
 			// fmt.Println(string(b))
