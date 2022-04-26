@@ -50,11 +50,11 @@ func (s *Storage) Take(t, n string) *metricscustom.Metric {
 				m := s.Mp.M[k]
 				return &m
 			}
-			return &metricscustom.Metric{}
+			return nil
 		}
 	}
 
-	return &metricscustom.Metric{}
+	return nil
 }
 
 func (s *Storage) TakeAll() ([]byte, error) {
