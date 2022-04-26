@@ -40,7 +40,6 @@ func NewMetric(t, n, v string) (*Metric, string) {
 
 			return nil, "incorrect value"
 		}
-
 		return &Metric{
 			ID:    n,
 			MType: t,
@@ -48,7 +47,6 @@ func NewMetric(t, n, v string) (*Metric, string) {
 		}, ""
 
 	case "gauge":
-
 		V, err := strconv.ParseFloat(v, 64)
 		if err != nil {
 			return nil, "incorrect value"
