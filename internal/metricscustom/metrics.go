@@ -142,13 +142,13 @@ func (m *Metric) MarshalMetricsinJSON(w io.Writer) error {
 	return err
 }
 
-func (m *MetricsPool) ReadMetricsJSON(r io.Reader) error {
+func (m *Metric) UnmarshalMetricJSON(r io.Reader) error {
 
 	buf, err := ioutil.ReadAll(r)
 	if err != nil {
 		return err
 	}
-	err = json.Unmarshal(buf, &m.M)
+	err = json.Unmarshal(buf, &m)
 	if err != nil {
 		return err
 	}

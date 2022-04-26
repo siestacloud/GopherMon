@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"strings"
@@ -197,19 +196,19 @@ func (h *MyHandler) ShowAllMetrics() echo.HandlerFunc {
 func (h *MyHandler) ShowMetricJSON() echo.HandlerFunc {
 
 	return func(c echo.Context) error {
-		c.Response().Header().Add("Content-Type", "application/json")
 		fmt.Println("New request on: ", c.Request().URL.Path)
-		buff, _ := ioutil.ReadAll(c.Request().Body)
-		fmt.Println("Request metric: ", string(buff))
+		c.Response().Header().Add("Content-Type", "application/json")
 		if c.Request().Method != http.MethodPost {
-			return c.HTML(http.StatusBadRequest, `"{"message":"Only POST method allowed"}"`)
+			return c.HTML(http.StatusMethodNotAllowed, `"{"message":"Method Not Allowed"}"`)
 		}
 		defer c.Request().Body.Close()
 		m := metricscustom.Metric{}
 		if err := json.NewDecoder(c.Request().Body).Decode(&m); err != nil {
-			log.Println(err)
-			return c.HTML(http.StatusOK, `"{"message":"Incorrect metric"}"`)
+			log.Println("Unable decode JSON", err)
+			return c.HTML(http.StatusBadRequest, `"{"message":"Incorrect metric"}"`)
 		}
+		defer c.Request().Body.Close()
+
 		metric := h.s.Take(m.MType, m.ID)
 		if metric == nil {
 			return c.HTML(http.StatusOK, `"{"message":"Metric Not Found"}"`)
