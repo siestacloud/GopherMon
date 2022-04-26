@@ -69,11 +69,16 @@ func (m *Metric) Check() string {
 		if m.Value != 0 {
 			return "incorrect value"
 		}
+		if m.Delta == 0 {
+			return "empty delta"
+		}
 		return ""
-
 	case "gauge":
 		if m.Delta != 0 {
 			return "incorrect value"
+		}
+		if m.Value == 0 {
+			return "empty value"
 		}
 		return ""
 	}

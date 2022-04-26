@@ -140,6 +140,10 @@ func (h *MyHandler) UpdateJSON() echo.HandlerFunc {
 				return c.HTML(http.StatusNotImplemented, `"{"message":"Unknown Metric Type"}"`)
 			case "incorrect value":
 				return c.HTML(http.StatusBadRequest, `"{"message":"Incorrect Metric Value"}"`)
+			case "empty value":
+				return c.HTML(http.StatusBadRequest, `"{"message":"empty value"}"`)
+			case "empty delta":
+				return c.HTML(http.StatusBadRequest, `"{"message":"empty delta"}"`)
 			default:
 				return c.HTML(http.StatusBadRequest, `"{"message":"Incorrect Metric"}"`)
 			}
@@ -204,17 +208,17 @@ func (h *MyHandler) ShowMetricJSON() echo.HandlerFunc {
 		m := metricscustom.Metric{}
 		if err := json.NewDecoder(c.Request().Body).Decode(&m); err != nil {
 			log.Println(err)
-			return c.HTML(http.StatusBadRequest, `"{"message":"Incorrect metric"}"`)
+			return c.HTML(http.StatusOK, `"{"message":"Incorrect metric"}"`)
 		}
 		metric := h.s.Take(m.MType, m.ID)
 		if metric == nil {
-			return c.HTML(http.StatusNotFound, `"{"message":"Metric Not Found"}"`)
+			return c.HTML(http.StatusOK, `"{"message":"Metric Not Found"}"`)
 		}
 		var buf bytes.Buffer
 		err := metric.MarshalMetricsinJSON(&buf)
 		if err != nil {
 			log.Panicln(err)
-			return c.HTML(http.StatusBadRequest, `"{"message":"Unable marshal metric"}"`)
+			return c.HTML(http.StatusOK, `"{"message":"Unable marshal metric"}"`)
 
 		}
 		return c.HTML(http.StatusOK, buf.String())
