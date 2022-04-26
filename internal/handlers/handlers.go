@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"strings"
@@ -203,7 +204,14 @@ func (h *MyHandler) ShowMetricJSON() echo.HandlerFunc {
 		}
 		defer c.Request().Body.Close()
 		m := metricscustom.Metric{}
-		if err := json.NewDecoder(c.Request().Body).Decode(&m); err != nil {
+		// if err := json.NewDecoder(c.Request().Body).Decode(&m); err != nil {
+		// 	log.Println("Unable decode JSON", err)
+		// 	return c.HTML(http.StatusBadRequest, `"{"message":"Incorrect metric"}"`)
+		// }
+
+		message, _ := ioutil.ReadAll(c.Request().Body)
+		err := json.Unmarshal([]byte(string(message)), &m)
+		if err != nil {
 			log.Println("Unable decode JSON", err)
 			return c.HTML(http.StatusBadRequest, `"{"message":"Incorrect metric"}"`)
 		}
@@ -214,7 +222,7 @@ func (h *MyHandler) ShowMetricJSON() echo.HandlerFunc {
 			return c.HTML(http.StatusOK, `"{"message":"Metric Not Found"}"`)
 		}
 		var buf bytes.Buffer
-		err := metric.MarshalMetricsinJSON(&buf)
+		err = metric.MarshalMetricsinJSON(&buf)
 		if err != nil {
 			log.Panicln(err)
 			return c.HTML(http.StatusOK, `"{"message":"Unable marshal metric"}"`)
