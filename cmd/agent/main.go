@@ -49,7 +49,7 @@ func takeMetrics(ctx context.Context, pollInterval time.Duration) {
 			runtime.ReadMemStats(&cms)
 			// Берем только нужные
 			cmp.AddMetrics(ic, &cms)
-			fmt.Printf("%v\n%v\n\n", cms.HeapReleased, cmp.M["HeapReleased"])
+			// fmt.Printf("%v\n%v\n\n", cms.HeapReleased, cmp.M["HeapReleased"])
 
 			// Just encode to json and print
 			// b, _ := json.Marshal(cms)
@@ -77,6 +77,7 @@ func url() {
 		if err != nil {
 			log.Fatal(err)
 		}
+		fmt.Println("JSON request agent", buf.String())
 		// конструируем запрос
 		request, err := http.NewRequest("POST", "http://localhost:8080/update/", &buf)
 		if err != nil {

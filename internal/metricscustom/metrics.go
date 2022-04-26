@@ -53,7 +53,7 @@ func NewMetric(t, n, v string) (*Metric, string) {
 		if err != nil {
 			return nil, "incorrect value"
 		}
-		fmt.Println("V:  ", n, V)
+		// fmt.Println("V:  ", n, V)
 		return &Metric{
 			ID:    n,
 			MType: t,

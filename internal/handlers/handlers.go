@@ -1,10 +1,10 @@
 package handlers
 
 import (
-	"bufio"
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"strings"
@@ -195,7 +195,8 @@ func (h *MyHandler) ShowMetricJSON() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		c.Response().Header().Add("Content-Type", "application/json")
 		fmt.Println("New request on: ", c.Request().URL.Path)
-		fmt.Println("Request metric: ", bufio.NewReader(c.Request().Body))
+		buff, _ := ioutil.ReadAll(c.Request().Body)
+		fmt.Println("Request metric: ", string(buff))
 		if c.Request().Method != http.MethodPost {
 			return c.HTML(http.StatusBadRequest, `"{"message":"Only POST method allowed"}"`)
 		}
