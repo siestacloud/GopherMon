@@ -220,13 +220,8 @@ func (h *MyHandler) ShowMetricJSON() echo.HandlerFunc {
 
 		metric := h.s.Take(m.MType, m.ID)
 		if metric == nil {
-			metric = &metricscustom.Metric{
-				ID:    m.ID,
-				MType: m.MType,
-				Value: 0,
-				Delta: 0,
-			}
 			log.Println("m not found")
+			return c.HTML(http.StatusNotFound, "")
 		}
 		var buf bytes.Buffer
 		err = metric.MarshalMetricsinJSON(&buf)
