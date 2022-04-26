@@ -52,6 +52,7 @@ func NewMetric(t, n, v string) (*Metric, string) {
 		if err != nil {
 			return nil, "incorrect value"
 		}
+		fmt.Println("V:  ", n, V)
 		return &Metric{
 			ID:    n,
 			MType: t,
@@ -109,7 +110,6 @@ func (m *MetricsPool) AddMetrics(counter int64, cms *runtime.MemStats) {
 		t := "gauge"
 		n := val.Type().Field(i).Name
 		v := fmt.Sprint(val.FieldByName(val.Type().Field(i).Name))
-
 		M, status := NewMetric(t, n, v)
 		if status != "" {
 
