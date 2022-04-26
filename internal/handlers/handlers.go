@@ -200,7 +200,7 @@ func (h *MyHandler) ShowMetricJSON() echo.HandlerFunc {
 		log.Println("New request on: ", c.Request().URL.Path)
 		c.Response().Header().Add("Content-Type", "application/json")
 		if c.Request().Method != http.MethodPost {
-			return c.HTML(http.StatusMethodNotAllowed, `"{"message":"Method Not Allowed"}"`)
+			return c.HTML(http.StatusMethodNotAllowed, "")
 		}
 		defer c.Request().Body.Close()
 		m := metricscustom.Metric{}
@@ -214,19 +214,20 @@ func (h *MyHandler) ShowMetricJSON() echo.HandlerFunc {
 		err := json.Unmarshal([]byte(string(message)), &m)
 		if err != nil {
 			log.Println("Unable decode JSON", err)
-			return c.HTML(http.StatusBadRequest, `"{"message":"Incorrect metric"}"`)
+			return c.HTML(http.StatusBadRequest, "")
 		}
 		defer c.Request().Body.Close()
 
 		metric := h.s.Take(m.MType, m.ID)
 		if metric == nil {
+			log.Println("m not found")
 			return c.HTML(http.StatusNotFound, "")
 		}
 		var buf bytes.Buffer
 		err = metric.MarshalMetricsinJSON(&buf)
 		if err != nil {
-			log.Panicln(err)
-			return c.HTML(http.StatusOK, `"{"message":"Unable marshal metric"}"`)
+			log.Panicln("message Unable marshal metric", err)
+			return c.HTML(http.StatusOK, "")
 
 		}
 		return c.HTML(http.StatusOK, buf.String())

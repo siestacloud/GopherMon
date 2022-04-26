@@ -109,6 +109,7 @@ func (m *MetricsPool) AddMetrics(counter int64, cms *runtime.MemStats) {
 
 	rand.Seed(time.Now().UTC().UnixNano())
 	m.M["PollCount"] = Metric{ID: "PollCount", Delta: counter, MType: "counter"}
+	m.M["RandomValue"] = Metric{ID: "RandomValue", Value: rand.Float64(), MType: "gauge"}
 
 	// val := reflect.ValueOf(cms).Elem()
 	// n := val.Type().Field(0).Name
@@ -126,9 +127,10 @@ func (m *MetricsPool) AddMetrics(counter int64, cms *runtime.MemStats) {
 
 			continue
 		}
-
 		m.M[val.Type().Field(i).Name] = *M
 	}
+	fmt.Println(cms.LastGC)
+	fmt.Println(m.M["LastGC"])
 }
 
 // WriteMetricJSON сериализует структуру Metric в JSON, и если всё отрабатывает
