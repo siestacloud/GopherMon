@@ -76,7 +76,7 @@ func (m *Metric) checkType(t string) error {
 //Устанавливаем Значение
 func (m *Metric) SetValue(v interface{}) error {
 	if m.ID == "" || m.MType == "" {
-		return errors.New("Unable set value for metric ID or type for mtrx undefined")
+		return errors.New("unable set value for metric ID or type for mtrx undefined")
 	}
 	if err := m.checkValue(v); err != nil {
 		return err
@@ -98,7 +98,7 @@ func (m *Metric) SetValue(v interface{}) error {
 			m.Value = &val
 			return nil
 		}
-		return errors.New("Unable set value for metric <" + m.GetID() + ">: incorrect type value for gauge mtrx ")
+		return errors.New("unable set value for metric <" + m.GetID() + ">: incorrect type value for gauge mtrx ")
 	case "counter":
 
 		sval, ok := v.(string)
@@ -198,5 +198,5 @@ func (m *Metric) UnmarshalMetricJSON(r io.Reader) error {
 		m.SetValue(v) //Присваиваем value float64
 		return nil
 	}
-	return errors.New("Something incorrect...")
+	return errors.New("something incorrect")
 }

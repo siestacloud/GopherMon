@@ -31,7 +31,7 @@ func main() {
 	defer cansel()
 	//Задаем интервал сбора метрик
 	pollInterval := time.Duration(2) * time.Second
-	reportInterval := time.Duration(20) * time.Second
+	reportInterval := time.Duration(10) * time.Second
 	go takeMetrics(ctx, pollInterval)
 	go postMetrics(ctx, reportInterval)
 
