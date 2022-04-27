@@ -195,7 +195,7 @@ func (m *Metric) UnmarshalMetricJSON(r io.Reader) error {
 		if err != nil {
 			return err
 		}
-		m.SetValue(v) //Присваиваем value float64
+		m.SetValue(v) //Присваиваем value float64/
 		return nil
 	}
 	return errors.New("something incorrect")
