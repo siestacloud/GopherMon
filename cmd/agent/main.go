@@ -79,6 +79,7 @@ func postMetrics(ctx context.Context, reportInterval time.Duration) {
 func url() {
 
 	for _, metric := range mp.M {
+		fmt.Println(metric, "   ", metric.Value)
 		// var buf bytes.Buffer
 		// err := metric.MarshalMetricsinJSON(&buf)
 		// if err != nil {
