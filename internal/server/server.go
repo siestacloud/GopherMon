@@ -10,27 +10,27 @@ import (
 	"time"
 
 	"github.com/labstack/echo/v4"
-	"github.com/siestacloud/service-monitoring/internal/handlers"
 	"github.com/siestacloud/service-monitoring/internal/server/config"
+	"github.com/siestacloud/service-monitoring/internal/storage"
 
 	"github.com/sirupsen/logrus"
 )
 
 //APIServer main server struct
 type APIServer struct {
-	config   *config.ServerConfig
-	logger   *logrus.Logger
-	e        *echo.Echo
-	handlers *handlers.MyHandler
+	c *config.ServerConfig
+	s *storage.Storage
+	l *logrus.Logger
+	e *echo.Echo
 }
 
 //New return point to new server
 func New(config *config.ServerConfig) *APIServer {
 	return &APIServer{
-		config:   config,
-		logger:   logrus.New(),
-		e:        echo.New(),
-		handlers: handlers.New(),
+		s: storage.New(),
+		l: logrus.New(),
+		e: echo.New(),
+		c: config,
 	}
 }
 
@@ -47,16 +47,16 @@ func (s *APIServer) Start() error {
 	// of an OS interrupt (defers the cancel just in case)
 	ctx, cancel := context.WithTimeout(
 		context.Background(),
-		s.config.Server.Timeout.Server,
+		s.c.Server.Timeout.Server,
 	)
 
 	defer cancel()
 
 	server := &http.Server{
-		Addr:         s.config.Server.Host + ":" + s.config.Server.Port,
-		ReadTimeout:  s.config.Server.Timeout.Read * time.Second,
-		WriteTimeout: s.config.Server.Timeout.Write * time.Second,
-		IdleTimeout:  s.config.Server.Timeout.Idle * time.Second,
+		Addr:         s.c.Server.Host + ":" + s.c.Server.Port,
+		ReadTimeout:  s.c.Server.Timeout.Read * time.Second,
+		WriteTimeout: s.c.Server.Timeout.Write * time.Second,
+		IdleTimeout:  s.c.Server.Timeout.Idle * time.Second,
 	}
 
 	if err := s.configureLogger(); err != nil {
@@ -68,7 +68,7 @@ func (s *APIServer) Start() error {
 	// Run the server on a new goroutine
 	go func() {
 		if err := s.e.StartServer(server); err != nil {
-			s.logger.Info("Fail starting http server: ", err)
+			s.l.Info("Fail starting http server: ", err)
 			log.Fatal()
 		}
 	}()
@@ -78,37 +78,36 @@ func (s *APIServer) Start() error {
 
 	// If we get one of the pre-prescribed syscalls, gracefully terminate the server
 	// while alerting the user
-	s.logger.Infof("Server is shutting down due to %+v\n", interrupt)
+	s.l.Infof("Server is shutting down due to %+v\n", interrupt)
 
 	if err := server.Shutdown(ctx); err != nil {
-		s.logger.Errorf("Server was unable to gracefully shutdown due to err: %+v", err)
+		s.l.Errorf("Server was unable to gracefully shutdown due to err: %+v", err)
 		return err
 	}
-	s.logger.Info("Server was gracefully shutdown")
+	s.l.Info("Server was gracefully shutdown")
 	return nil
 }
 
 func (s *APIServer) configureLogger() error {
-	level, err := logrus.ParseLevel(s.config.Server.LogLevel)
+	level, err := logrus.ParseLevel(s.c.Server.LogLevel)
 	if err != nil {
 		return err
 	}
-	s.logger.SetLevel(level)
-	if s.config.Server.LogLevel == "debug" {
-		s.logger.SetReportCaller(true)
-		s.logger.SetFormatter(&logrus.TextFormatter{})
+	s.l.SetLevel(level)
+	if s.c.Server.LogLevel == "debug" {
+		s.l.SetReportCaller(true)
+		s.l.SetFormatter(&logrus.TextFormatter{})
 	}
 	return nil
 }
 
 //configureRouter Set handlers for URL path's
 func (s *APIServer) configureEchoRouter() {
-	s.e.POST("/update/:type/:name/:value", s.handlers.Update())
-	s.e.POST("/update/", s.handlers.UpdateJSON())
-	s.e.GET("/value/:type/:name", s.handlers.ShowMetric())
-	s.e.POST("/value/", s.handlers.ShowMetricJSON())
-
-	s.e.GET("/", s.handlers.ShowAllMetrics())
+	s.e.POST("/update/:type/:name/:value", s.UpdateParam())
+	s.e.POST("/update/", s.UpdateJSON())
+	s.e.GET("/value/:type/:name", s.ShowMetric())
+	s.e.POST("/value/", s.ShowMetricJSON())
+	s.e.GET("/", s.ShowAllMetrics())
 
 	// Prometheus endpoint
 	// s.e.Use(middleware.Logger())

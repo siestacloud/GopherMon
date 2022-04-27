@@ -1,5 +1,5 @@
 server:
-  log_level: debug
+  log_level: info
   host: 0.0.0.0
   port: 8080
   timeout:
