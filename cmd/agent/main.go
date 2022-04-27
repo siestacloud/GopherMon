@@ -3,9 +3,9 @@ package main
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"log"
 	"math/rand"
 	"net/http"
@@ -77,39 +77,28 @@ func postMetrics(ctx context.Context, reportInterval time.Duration) {
 
 //
 func url() {
-	// конструируем клиент
-	client := &http.Client{}
+
 	for _, metric := range mp.M {
-		var buf bytes.Buffer
-		err := metric.MarshalMetricsinJSON(&buf)
+		// var buf bytes.Buffer
+		// err := metric.MarshalMetricsinJSON(&buf)
+		// if err != nil {
+		// 	log.Fatal(err)
+		// }
+		// fmt.Println("JSON request agent", buf.String())
+		// // конструируем запрос
+		body, err := json.Marshal(metric)
 		if err != nil {
-			log.Fatal(err)
-		}
-		fmt.Println("JSON request agent", buf.String())
-		// конструируем запрос
-		request, err := http.NewRequest("POST", "http://127.0.0.1:8080/update/", &buf)
-		if err != nil {
-			fmt.Printf("Request %s\n\n", err)
-		}
-		// устанавливаем заголовки
-		request.Header.Add("Content-Type", "application/json")
-		// отправляем запрос
-		resp, err := client.Do(request)
-		if err != nil {
-			fmt.Printf("Do %s\n\n", err)
-			break
-		}
-		if resp != nil {
-			b, err := io.ReadAll(resp.Body)
-			if err != nil {
-				fmt.Println(err)
-				continue
-			}
-			fmt.Printf("Status: %s  Body: %v\n", resp.Status, string(b))
-			resp.Body.Close()
+			fmt.Println("json marshal err: ", err)
 			continue
 		}
-
+		resp, err := http.Post("http://127.0.0.1:8080/update/", "application/json", bytes.NewBuffer(body))
+		if err != nil {
+			fmt.Println("DO POST err: ", err)
+			continue
+		}
+		fmt.Printf("Status: %s  \n", resp.Status)
+		resp.Body.Close()
+		continue
 	}
 
 }

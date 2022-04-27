@@ -148,6 +148,9 @@ func (s *APIServer) ShowMetricJSON() echo.HandlerFunc {
 		s.l.Info("New request on: ", c.Request().URL.String())
 		defer c.Request().Body.Close()
 
+		// message, _ := bytes.ReadAll(c.Request().Body)
+		// s.l.Info(string(message))
+
 		mtrx := mtrx.NewMetric() // Промежуточный обьект, поля которого будут проверены
 		if err := json.NewDecoder(c.Request().Body).Decode(&mtrx); err != nil {
 			s.l.Error(err)
