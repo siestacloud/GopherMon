@@ -74,7 +74,7 @@ func (s *APIServer) UpdateJSON() echo.HandlerFunc {
 			}
 			s.l.Warn("OK")
 		}
-		s.s.Mp.PrintAll()
+		// s.s.Mp.PrintAll()
 		return c.HTML(http.StatusOK, "")
 	}
 }
