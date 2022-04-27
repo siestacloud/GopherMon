@@ -87,7 +87,7 @@ func url() {
 		}
 		fmt.Println("JSON request agent", buf.String())
 		// конструируем запрос
-		request, err := http.NewRequest("POST", "http://localhost:8080/update/", &buf)
+		request, err := http.NewRequest("POST", "http://127.0.0.1:8080/update/", &buf)
 		if err != nil {
 			fmt.Printf("Request %s\n\n", err)
 		}
