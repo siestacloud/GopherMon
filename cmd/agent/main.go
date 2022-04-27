@@ -105,7 +105,7 @@ func url() {
 				fmt.Println(err)
 				continue
 			}
-			fmt.Printf("%v\n", string(b))
+			fmt.Printf("Status: %s  Body: %v\n", resp.Status, string(b))
 			resp.Body.Close()
 			continue
 		}

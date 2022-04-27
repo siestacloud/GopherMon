@@ -2,6 +2,7 @@ package server
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -147,11 +148,12 @@ func (s *APIServer) ShowMetricJSON() echo.HandlerFunc {
 		s.l.Info("New request on: ", c.Request().URL.String())
 		defer c.Request().Body.Close()
 
-		//Создаю новую метрику и десериализую данные из запроса в нее
-		mtrx := mtrx.NewMetric()
-		if err := mtrx.UnmarshalMetricJSON(c.Request().Body); err != nil {
-			s.l.Error("", err)
+		mtrx := mtrx.NewMetric() // Промежуточный обьект, поля которого будут проверены
+		if err := json.NewDecoder(c.Request().Body).Decode(&mtrx); err != nil {
+			s.l.Error(err)
+			return c.HTML(http.StatusNotFound, "")
 		}
+		s.l.Info("from request: ", mtrx)
 
 		//Произвожу поиск метрики в базе
 		sMtrx := s.s.Mp.LookUP(mtrx.GetID())

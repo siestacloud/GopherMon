@@ -173,7 +173,6 @@ func (m *Metric) UnmarshalMetricJSON(r io.Reader) error {
 	if err := json.NewDecoder(r).Decode(&mtrxCheck); err != nil {
 		return err
 	}
-
 	err := m.SetID(mtrxCheck.GetID()) // Проверка имени метрики
 	if err != nil {
 		return err // Проверка не пройдена
