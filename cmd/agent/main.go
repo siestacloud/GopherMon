@@ -92,6 +92,7 @@ func url() {
 			fmt.Println("json marshal err: ", err)
 			continue
 		}
+		fmt.Println("SHOW METRIC", string(body))
 		resp, err := http.Post("http://127.0.0.1:8080/update/", "application/json", bytes.NewBuffer(body))
 		if err != nil {
 			fmt.Println("DO POST err: ", err)
