@@ -24,7 +24,7 @@ var (
 )
 
 // MyApiError — описание ошибки при неверном запросе.
-type MyApiError struct {
+type MyAPIError struct {
 	Code      int       `json:"code"`
 	Message   string    `json:"message"`
 	Timestamp time.Time `json:"timestamp"`
@@ -88,7 +88,7 @@ func url() {
 		client := resty.New().SetRetryCount(2).
 			SetRetryWaitTime(1 * time.Second).
 			SetRetryMaxWaitTime(2 * time.Second)
-		var responseErr MyApiError
+		var responseErr MyAPIError
 		_, err := client.R().
 			SetError(&responseErr).
 			SetBody(metric).

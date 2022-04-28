@@ -93,7 +93,7 @@ func (s *APIServer) UpdateJSON() echo.HandlerFunc {
 		v, _ := sMtrx.GetValue()
 		s.l.Info(" /update/  mtrx object from storage  ", sMtrx, "dalta: ", d, "  value: ", v)
 		// s.s.Mp.PrintAll()
-		return c.HTML(http.StatusOK, "")
+		return c.String(http.StatusOK, "Ok")
 
 	}
 }
