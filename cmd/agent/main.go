@@ -93,13 +93,30 @@ func url() {
 			continue
 		}
 		fmt.Println("SHOW METRIC", string(body))
-		resp, err := http.Post("http://127.0.0.1:8080/update/", "application/json", bytes.NewBuffer(body))
+		// конструируем запрос
+		request, err := http.NewRequest("POST", "http://127.0.0.1:8080/update/", bytes.NewBuffer(body))
 		if err != nil {
-			fmt.Println("DO POST err: ", err)
-			break
+			fmt.Printf("Request %s\n\n", err)
 		}
-		fmt.Printf("Status: %s  \n", resp.Status)
+		// устанавливаем заголовки
+		request.Header.Add("Content-Type", "text/plain")
+		// Close the connection
+		request.Close = true
+		// конструируем клиент
+		client := &http.Client{}
+		// отправляем запрос
+		resp, err := client.Do(request)
+		if err != nil {
+			fmt.Printf("Do %s\n\n", err)
+			continue
+		}
 		resp.Body.Close()
+		// resp, err := http.Post("http://127.0.0.1:8080/update/", "application/json", bytes.NewBuffer(body))
+		// if err != nil {
+		// 	fmt.Println("DO POST err: ", err)
+		// 	break
+		// }
+		fmt.Printf("Status: %s  \n", resp.Status)
 		continue
 	}
 

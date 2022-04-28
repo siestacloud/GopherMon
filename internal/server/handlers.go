@@ -63,7 +63,7 @@ func (s *APIServer) UpdateJSON() echo.HandlerFunc {
 		if err != nil {
 			s.l.Error("check err", err)
 		}
-		s.l.Info("/update/ mtrx add/update: ", string(body))
+		s.l.Info("/update/ mtrx from request", string(body))
 
 		defer c.Request().Body.Close()
 
