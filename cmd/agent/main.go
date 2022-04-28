@@ -1,14 +1,11 @@
 package main
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
 	"math/rand"
-	"net/http"
 	"os"
 	"os/signal"
 	"reflect"
@@ -16,6 +13,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/go-resty/resty/v2"
 	"github.com/siestacloud/service-monitoring/internal/mtrx"
 )
 
@@ -24,6 +22,13 @@ var (
 	mp  *mtrx.MetricsPool
 	err error
 )
+
+// MyApiError — описание ошибки при неверном запросе.
+type MyApiError struct {
+	Code      int       `json:"code"`
+	Message   string    `json:"message"`
+	Timestamp time.Time `json:"timestamp"`
+}
 
 func main() {
 
@@ -79,45 +84,58 @@ func postMetrics(ctx context.Context, reportInterval time.Duration) {
 func url() {
 
 	for _, metric := range mp.M {
-		fmt.Println(metric, "   ", metric.Value)
-		// var buf bytes.Buffer
-		// err := metric.MarshalMetricsinJSON(&buf)
+		client := resty.New().SetRetryCount(2).
+			SetRetryWaitTime(1 * time.Second).
+			SetRetryMaxWaitTime(2 * time.Second)
+		var responseErr MyApiError
+		_, err := client.R().
+			SetError(&responseErr).
+			SetBody(metric).
+			Post("http://127.0.0.1:8080/update/")
+		if err != nil {
+			fmt.Println("resp err:  ", responseErr)
+			log.Println("resp err:: ", err)
+		}
+
+		// fmt.Println(metric, "   ", metric.Value)
+		// // var buf bytes.Buffer
+		// // err := metric.MarshalMetricsinJSON(&buf)
+		// // if err != nil {
+		// // 	log.Fatal(err)
+		// // }
+		// // fmt.Println("JSON request agent", buf.String())
+		// // // конструируем запрос
+		// body, err := json.Marshal(metric)
 		// if err != nil {
-		// 	log.Fatal(err)
+		// 	fmt.Println("json marshal err: ", err)
+		// 	continue
 		// }
-		// fmt.Println("JSON request agent", buf.String())
+		// fmt.Println("SHOW METRIC", string(body))
 		// // конструируем запрос
-		body, err := json.Marshal(metric)
-		if err != nil {
-			fmt.Println("json marshal err: ", err)
-			continue
-		}
-		fmt.Println("SHOW METRIC", string(body))
-		// конструируем запрос
-		request, err := http.NewRequest("POST", "http://127.0.0.1:8080/update/", bytes.NewBuffer(body))
-		if err != nil {
-			fmt.Printf("Request %s\n\n", err)
-		}
-		// устанавливаем заголовки
-		request.Header.Add("Content-Type", "text/plain")
-		// Close the connection
-		request.Close = true
-		// конструируем клиент
-		client := &http.Client{}
-		// отправляем запрос
-		resp, err := client.Do(request)
-		if err != nil {
-			fmt.Printf("Do %s\n\n", err)
-			continue
-		}
-		resp.Body.Close()
-		// resp, err := http.Post("http://127.0.0.1:8080/update/", "application/json", bytes.NewBuffer(body))
+		// request, err := http.NewRequest("POST", "http://127.0.0.1:8080/update/", bytes.NewBuffer(body))
 		// if err != nil {
-		// 	fmt.Println("DO POST err: ", err)
-		// 	break
+		// 	fmt.Printf("Request %s\n\n", err)
 		// }
-		fmt.Printf("Status: %s  \n", resp.Status)
-		continue
+		// // устанавливаем заголовки
+		// request.Header.Add("Content-Type", "text/plain")
+		// // Close the connection
+		// request.Close = true
+		// // конструируем клиент
+		// client := &http.Client{}
+		// // отправляем запрос
+		// resp, err := client.Do(request)
+		// if err != nil {
+		// 	fmt.Printf("Do %s\n\n", err)
+		// 	continue
+		// }
+		// resp.Body.Close()
+		// // resp, err := http.Post("http://127.0.0.1:8080/update/", "application/json", bytes.NewBuffer(body))
+		// // if err != nil {
+		// // 	fmt.Println("DO POST err: ", err)
+		// // 	break
+		// // }
+		// fmt.Printf("Status: %s  \n", resp.Status)
+		// continue
 	}
 
 }
