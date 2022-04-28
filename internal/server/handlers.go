@@ -65,7 +65,7 @@ func (s *APIServer) UpdateJSON() echo.HandlerFunc {
 			s.l.Error(err)
 			return c.HTML(http.StatusBadRequest, "")
 		}
-
+		s.l.Info(" /update/ from request: ", mtrx)
 		if !s.s.Mp.Update(mtrx.GetID(), *mtrx) {
 			s.l.Warn("unable find and update metric in storage")
 			s.l.Warn("try add new metric")
@@ -156,7 +156,7 @@ func (s *APIServer) ShowMetricJSON() echo.HandlerFunc {
 			s.l.Error(err)
 			return c.HTML(http.StatusNotFound, "")
 		}
-		s.l.Info("from request: ", mtrx)
+		s.l.Info(" /value/  from request: ", mtrx)
 
 		//Произвожу поиск метрики в базе
 		sMtrx := s.s.Mp.LookUP(mtrx.GetID())
