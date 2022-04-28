@@ -190,7 +190,7 @@ func (s *APIServer) ShowMetricJSON() echo.HandlerFunc {
 			return c.HTML(http.StatusOK, "")
 		}
 		s.l.Info("/value/ response will send: ", buf.String())
-		return c.HTML(http.StatusOK, buf.String())
+		return c.String(http.StatusOK, buf.String())
 	}
 }
 
