@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
@@ -58,14 +59,20 @@ func (s *APIServer) UpdateJSON() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		c.Response().Header().Add("Content-Type", "application/json")
 		s.l.Info("New request on: ", c.Request().URL.String())
+		body, err := io.ReadAll(c.Request().Body)
+		if err != nil {
+			s.l.Error("check err", err)
+		}
+		s.l.Info("/update/ mtrx add/update: ", string(body))
+
 		defer c.Request().Body.Close()
 
 		mtrx := mtrx.NewMetric()
-		if err := mtrx.UnmarshalMetricJSON(c.Request().Body); err != nil {
+		if err := mtrx.UnmarshalMetricJSON(body); err != nil {
 			s.l.Error(err)
 			return c.HTML(http.StatusBadRequest, "")
 		}
-		s.l.Info(" /update/ from request: ", mtrx)
+		s.l.Info(" /update/ new mtrx object  ", mtrx)
 		if !s.s.Mp.Update(mtrx.GetID(), *mtrx) {
 			s.l.Warn("unable find and update metric in storage")
 			s.l.Warn("try add new metric")
@@ -75,8 +82,19 @@ func (s *APIServer) UpdateJSON() echo.HandlerFunc {
 			}
 			s.l.Warn("OK")
 		}
+
+		//Произвожу поиск метрики в базе
+		sMtrx := s.s.Mp.LookUP(mtrx.GetID())
+		if sMtrx == nil {
+			s.l.Error("/update/ metric not found in storage")
+
+		}
+		d, _ := sMtrx.GetDelta()
+		v, _ := sMtrx.GetValue()
+		s.l.Info(" /update/  mtrx object from storage  ", sMtrx, "dalta: ", d, "  value: ", v)
 		// s.s.Mp.PrintAll()
 		return c.HTML(http.StatusOK, "")
+
 	}
 }
 
@@ -171,6 +189,7 @@ func (s *APIServer) ShowMetricJSON() echo.HandlerFunc {
 			s.l.Error("message Unable marshal metric", err)
 			return c.HTML(http.StatusOK, "")
 		}
+		s.l.Info("/value/ response will send: ", buf.String())
 		return c.HTML(http.StatusOK, buf.String())
 	}
 }

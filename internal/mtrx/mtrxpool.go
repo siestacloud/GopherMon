@@ -49,7 +49,7 @@ func (m *MetricsPool) Update(key string, mtrx Metric) bool {
 	case "counter":
 		dmtrx := m.LookUP(key)
 		if dmtrx == nil {
-			return false
+			break
 		}
 
 		d, err := dmtrx.GetDelta()

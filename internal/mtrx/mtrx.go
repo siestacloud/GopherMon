@@ -167,12 +167,16 @@ func (m *Metric) MarshalMetricsinJSON(w io.Writer) error {
 }
 
 //Создает метрики и чекает ее поля из JSON
-func (m *Metric) UnmarshalMetricJSON(r io.Reader) error {
+func (m *Metric) UnmarshalMetricJSON(data []byte) error {
 
 	mtrxCheck := NewMetric() // Промежуточный обьект, поля которого будут проверены
-	if err := json.NewDecoder(r).Decode(&mtrxCheck); err != nil {
+	// if err := json.NewDecoder(r).Decode(&mtrxCheck); err != nil {
+	// 	return err
+	// }
+	if err := json.Unmarshal(data, mtrxCheck); err != nil {
 		return err
 	}
+
 	err := m.SetID(mtrxCheck.GetID()) // Проверка имени метрики
 	if err != nil {
 		return err // Проверка не пройдена
