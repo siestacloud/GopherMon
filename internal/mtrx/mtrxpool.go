@@ -45,32 +45,32 @@ func (m *MetricsPool) Update(key string, mtrx Metric) bool {
 	if key == "" {
 		return false
 	}
-	switch mtrx.GetType() {
-	case "counter":
-		dmtrx := m.LookUP(key)
-		if dmtrx == nil {
-			break
-		}
+	// switch mtrx.GetType() {
+	// case "counter":
+	// 	dmtrx := m.LookUP(key)
+	// 	if dmtrx == nil {
+	// 		break
+	// 	}
 
-		d, err := dmtrx.GetDelta()
-		if err != nil {
-			fmt.Println("1", err)
-			return false
-		}
+	// 	d, err := dmtrx.GetDelta()
+	// 	if err != nil {
+	// 		fmt.Println("1", err)
+	// 		return false
+	// 	}
 
-		dm, err := mtrx.GetDelta()
-		if err != nil {
-			fmt.Println(err)
-			return false
-		}
-		val := d + dm
-		fmt.Println("HERE", val)
+	// 	dm, err := mtrx.GetDelta()
+	// 	if err != nil {
+	// 		fmt.Println(err)
+	// 		return false
+	// 	}
+	// 	val := d + dm
+	// 	fmt.Println("HERE", val)
 
-		err = mtrx.SetValue(val)
-		if err != nil {
-			return false
-		}
-	}
+	// 	err = mtrx.SetValue(val)
+	// 	if err != nil {
+	// 		return false
+	// 	}
+	// }
 	m.M[key] = mtrx
 	return true //доб новую метрику в мапку
 }

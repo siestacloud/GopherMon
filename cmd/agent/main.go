@@ -35,7 +35,7 @@ func main() {
 	ctx, cansel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT)
 	defer cansel()
 	//Задаем интервал сбора метрик
-	pollInterval := time.Duration(3) * time.Second
+	pollInterval := time.Duration(2) * time.Second
 	reportInterval := time.Duration(10) * time.Second
 	go takeMetrics(ctx, pollInterval)
 	go postMetrics(ctx, reportInterval)
@@ -84,6 +84,7 @@ func postMetrics(ctx context.Context, reportInterval time.Duration) {
 func url() {
 
 	for _, metric := range mp.M {
+		fmt.Println(metric, "   ", metric.Value)
 		client := resty.New().SetRetryCount(2).
 			SetRetryWaitTime(1 * time.Second).
 			SetRetryMaxWaitTime(2 * time.Second)
