@@ -96,7 +96,7 @@ func url() {
 		resp, err := http.Post("http://127.0.0.1:8080/update/", "application/json", bytes.NewBuffer(body))
 		if err != nil {
 			fmt.Println("DO POST err: ", err)
-			continue
+			break
 		}
 		fmt.Printf("Status: %s  \n", resp.Status)
 		resp.Body.Close()
