@@ -30,7 +30,7 @@ func main() {
 	ctx, cansel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT)
 	defer cansel()
 	//Задаем интервал сбора метрик
-	pollInterval := time.Duration(2) * time.Second
+	pollInterval := time.Duration(3) * time.Second
 	reportInterval := time.Duration(10) * time.Second
 	go takeMetrics(ctx, pollInterval)
 	go postMetrics(ctx, reportInterval)
