@@ -24,7 +24,7 @@ type APIServer struct {
 	e *echo.Echo
 }
 
-//New return point to new server
+//New return point to new server.
 func New(config *config.ServerConfig) *APIServer {
 	return &APIServer{
 		s: storage.New(),
