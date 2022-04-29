@@ -1,7 +1,5 @@
 server:
   log_level: info
-  host: 0.0.0.0
-  port: 8080
   timeout:
       server: 20
       read: 15
