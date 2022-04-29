@@ -38,7 +38,7 @@ var (
 	mp  *mtrx.MetricsPool
 	err error
 	cfg = Config{
-		Address:        "127.0.0.1:8081",
+		Address:        "127.0.0.1:8080",
 		PollInterval:   time.Duration(2) * time.Second,
 		ReportInterval: time.Duration(10) * time.Second,
 	}
