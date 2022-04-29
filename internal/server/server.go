@@ -53,7 +53,7 @@ func (s *APIServer) Start() error {
 	defer cancel()
 
 	server := &http.Server{
-		Addr:         s.c.Server.Host + ":" + s.c.Server.Port,
+		Addr:         s.c.Address,
 		ReadTimeout:  s.c.Server.Timeout.Read * time.Second,
 		WriteTimeout: s.c.Server.Timeout.Write * time.Second,
 		IdleTimeout:  s.c.Server.Timeout.Idle * time.Second,
