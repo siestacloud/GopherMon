@@ -16,7 +16,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-//APIServer main server struct
+//APIServer main server struct.
 type APIServer struct {
 	c *config.ServerConfig
 	s *storage.Storage
