@@ -2,7 +2,6 @@ package server
 
 import (
 	"context"
-	"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -43,14 +42,15 @@ func (s *APIServer) Start() error {
 	// Handle ctrl+c/ctrl+x interrupt
 	signal.Notify(runChan, os.Interrupt, syscall.SIGTSTP)
 
-	// Set up a context to allow for graceful server shutdowns in the event
-	// of an OS interrupt (defers the cancel just in case)
 	ctx, cancel := context.WithTimeout(
 		context.Background(),
-		s.c.Server.Timeout.Server,
+		s.c.Server.Timeout.Server*time.Second,
 	)
-
-	defer cancel()
+	defer func() {
+		time.Sleep(time.Second * 4)
+		s.l.Info("Server was gracefully shutdown")
+		cancel()
+	}()
 
 	server := &http.Server{
 		Addr:         s.c.Address,
@@ -68,8 +68,7 @@ func (s *APIServer) Start() error {
 	// Run the server on a new goroutine
 	go func() {
 		if err := s.e.StartServer(server); err != nil {
-			s.l.Info("Fail starting http server: ", err)
-			log.Fatal()
+			s.l.Info(err)
 		}
 	}()
 
@@ -84,7 +83,7 @@ func (s *APIServer) Start() error {
 		s.l.Errorf("Server was unable to gracefully shutdown due to err: %+v", err)
 		return err
 	}
-	s.l.Info("Server was gracefully shutdown")
+
 	return nil
 }
 
@@ -109,16 +108,4 @@ func (s *APIServer) configureEchoRouter() {
 	s.e.GET("/value/:type/:name", s.ShowMetric())
 	s.e.POST("/value/", s.ShowMetricJSON())
 	s.e.GET("/", s.ShowAllMetrics())
-
-	// Prometheus endpoint
-	// s.e.Use(middleware.Logger())
-	// s.e.Use(middleware.Recover())
-	// s.e.GET("/", s.handlers.Update())
-	// a.e.GET("/success", s.handleSuccess)
-	// a.e.POST("/pull", s.handleUploadPost)
-	// a.e.GET("/metrics", Handler(promhttp.Handler())
-	// a.e.GET("/css/*", s.staticHandle)
-	// a.e.GET("/js/*", s.staticHandle)
-	// a.e.GET("/img/*", s.staticHandle)
-
 }
