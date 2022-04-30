@@ -102,7 +102,7 @@ func postMetrics(ctx context.Context, reportInterval time.Duration) {
 func url() {
 
 	for _, metric := range mp.M {
-		fmt.Println(metric, "   ", metric.Value)
+		// fmt.Println(metric, "   ", metric.Value)
 		client := resty.New().SetRetryCount(2).
 			SetRetryWaitTime(1 * time.Second).
 			SetRetryMaxWaitTime(2 * time.Second)
@@ -112,8 +112,8 @@ func url() {
 			SetBody(metric).
 			Post("http://" + cfg.Address + "/update/")
 		if err != nil {
-			fmt.Println("resp err:  ", responseErr)
-			log.Println("resp err:: ", err)
+			// fmt.Println("resp err:  ", responseErr)
+			// log.Println("resp err:: ", err)
 		}
 
 		// fmt.Println(metric, "   ", metric.Value)
