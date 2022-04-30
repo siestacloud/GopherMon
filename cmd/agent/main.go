@@ -18,7 +18,7 @@ import (
 	"github.com/siestacloud/service-monitoring/internal/mtrx"
 )
 
-// MyApiError — описание ошибки при неверном запросе.
+// MyApiError — описание ошибки при неверном запросе
 type (
 	Config struct {
 		Address        string        `env:"ADDRESS"`
