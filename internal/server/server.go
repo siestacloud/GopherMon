@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/labstack/echo/v4"
-	"github.com/siestacloud/service-monitoring/internal/mtrx"
 	"github.com/siestacloud/service-monitoring/internal/server/config"
 	"github.com/siestacloud/service-monitoring/internal/storage"
 
@@ -32,16 +31,11 @@ func New(config *config.ServerConfig) (*APIServer, error) {
 	}
 
 	if config.Restore {
-
-		mp, err := sf.ReadEvent()
+		err := sf.ReadStorage()
 		if err != nil {
+
 			return nil, err
 		}
-		sf.Mp = mp
-		if mp == nil {
-			sf.Mp = mtrx.NewMetricsPool()
-		}
-
 	}
 
 	return &APIServer{
@@ -67,9 +61,8 @@ func (s *APIServer) Start() error {
 		time.Duration(s.c.Server.Timeout.Server)*time.Second,
 	)
 	defer func() {
-		time.Sleep(time.Second * 4)
 		s.l.Warn("Server saving metrics pool...")
-		if err := s.s.W.WriteEvent(s.s.Mp); err != nil {
+		if err := s.s.WriteStorage(); err != nil {
 			s.l.Error("failed save metrics pool: ", err)
 			cancel()
 		}
@@ -143,7 +136,7 @@ func (s *APIServer) StoreInterval() {
 	for {
 
 		time.Sleep(time.Second * time.Duration(s.c.StoreInterval))
-		if err := s.s.W.WriteEvent(s.s.Mp); err != nil {
+		if err := s.s.WriteStorage(); err != nil {
 			s.l.Error("error store interval: ", err)
 		}
 		s.l.Info("Storage update")
