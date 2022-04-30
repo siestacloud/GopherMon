@@ -29,12 +29,13 @@ func New(config *config.ServerConfig) (*APIServer, error) {
 	if err != nil {
 		return nil, err
 	}
+	if config.StoreFile != "" {
+		if config.Restore {
+			err := sf.ReadStorage()
+			if err != nil {
 
-	if config.Restore {
-		err := sf.ReadStorage()
-		if err != nil {
-
-			return nil, err
+				return nil, err
+			}
 		}
 	}
 
@@ -62,9 +63,11 @@ func (s *APIServer) Start() error {
 	)
 	defer func() {
 		s.l.Warn("Server saving metrics pool...")
-		if err := s.s.WriteStorage(); err != nil {
-			s.l.Error("failed save metrics pool: ", err)
-			cancel()
+		if s.c.StoreFile != "" {
+			if err := s.s.WriteStorage(); err != nil {
+				s.l.Error("failed save metrics pool: ", err)
+				cancel()
+			}
 		}
 
 		s.l.Info("Server was gracefully shutdown")
@@ -90,8 +93,11 @@ func (s *APIServer) Start() error {
 			s.l.Info(err)
 		}
 	}()
-	if s.c.StoreInterval != 0 {
-		go s.StoreInterval()
+
+	if s.c.StoreFile != "" {
+		if s.c.StoreInterval != 0 {
+			go s.StoreInterval()
+		}
 	}
 
 	// Block on this let know, why the server is shutting down
