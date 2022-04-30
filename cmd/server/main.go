@@ -15,10 +15,11 @@ var (
 
 func main() {
 
-	err := config.ParseFile(cli.ConfigPath, &cfg)
+	err := config.Parse(cli.ConfigPath, &cfg)
 	if err != nil {
 		log.Fatal(err)
 	}
+	log.Println(cfg)
 	s := server.New(&cfg)
 	if err = s.Start(); err != nil {
 		os.Exit(0)

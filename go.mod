@@ -3,6 +3,7 @@ module github.com/siestacloud/service-monitoring
 go 1.18
 
 require (
+	github.com/caarlos0/env/v6 v6.9.1
 	github.com/go-resty/resty/v2 v2.7.0
 	github.com/labstack/echo/v4 v4.7.2
 	github.com/sirupsen/logrus v1.8.1

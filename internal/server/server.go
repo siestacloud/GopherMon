@@ -16,7 +16,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-//APIServer main server struct
+//APIServer main server struct.
 type APIServer struct {
 	c *config.ServerConfig
 	s *storage.Storage
@@ -24,7 +24,7 @@ type APIServer struct {
 	e *echo.Echo
 }
 
-//New return point to new server
+//New return point to new server.
 func New(config *config.ServerConfig) *APIServer {
 	return &APIServer{
 		s: storage.New(),
@@ -53,7 +53,7 @@ func (s *APIServer) Start() error {
 	defer cancel()
 
 	server := &http.Server{
-		Addr:         s.c.Server.Host + ":" + s.c.Server.Port,
+		Addr:         s.c.Address,
 		ReadTimeout:  s.c.Server.Timeout.Read * time.Second,
 		WriteTimeout: s.c.Server.Timeout.Write * time.Second,
 		IdleTimeout:  s.c.Server.Timeout.Idle * time.Second,

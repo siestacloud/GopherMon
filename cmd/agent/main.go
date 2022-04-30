@@ -13,30 +13,48 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/caarlos0/env/v6"
 	"github.com/go-resty/resty/v2"
 	"github.com/siestacloud/service-monitoring/internal/mtrx"
+)
+
+// MyApiError — описание ошибки при неверном запросе.
+type (
+	Config struct {
+		Address        string        `env:"ADDRESS"`
+		PollInterval   time.Duration `env:"POLL_INTERVAL"`
+		ReportInterval time.Duration `env:"REPORT_INTERVAL"`
+	}
+
+	APIError struct {
+		Code      int       `json:"code"`
+		Message   string    `json:"message"`
+		Timestamp time.Time `json:"timestamp"`
+	}
 )
 
 var (
 	cms runtime.MemStats
 	mp  *mtrx.MetricsPool
 	err error
+	cfg = Config{
+		Address:        "127.0.0.1:8080",
+		PollInterval:   time.Duration(2) * time.Second,
+		ReportInterval: time.Duration(10) * time.Second,
+	}
 )
 
-// MyApiError — описание ошибки при неверном запросе.
-type MyAPIError struct {
-	Code      int       `json:"code"`
-	Message   string    `json:"message"`
-	Timestamp time.Time `json:"timestamp"`
-}
-
 func main() {
+	err := env.Parse(&cfg)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	ctx, cansel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT)
 	defer cansel()
 	//Задаем интервал сбора метрик
-	pollInterval := time.Duration(2) * time.Second
-	reportInterval := time.Duration(10) * time.Second
+	pollInterval := cfg.PollInterval
+	reportInterval := cfg.ReportInterval
 	go takeMetrics(ctx, pollInterval)
 	go postMetrics(ctx, reportInterval)
 
@@ -88,11 +106,11 @@ func url() {
 		client := resty.New().SetRetryCount(2).
 			SetRetryWaitTime(1 * time.Second).
 			SetRetryMaxWaitTime(2 * time.Second)
-		var responseErr MyAPIError
+		var responseErr APIError
 		_, err := client.R().
 			SetError(&responseErr).
 			SetBody(metric).
-			Post("http://127.0.0.1:8080/update/")
+			Post("http://" + cfg.Address + "/update/")
 		if err != nil {
 			fmt.Println("resp err:  ", responseErr)
 			log.Println("resp err:: ", err)

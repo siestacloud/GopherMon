@@ -3,6 +3,8 @@ package config
 import (
 	"log"
 
+	"github.com/caarlos0/env/v6"
+
 	"github.com/spf13/viper"
 )
 
@@ -10,10 +12,11 @@ import (
 type CLI struct {
 	ConfigPath string `help:"Config path" type:"path" default:"config.yaml"`
 	// Add more here
-
 }
 
-func ParseFile(path string, out interface{}) error {
+var ()
+
+func Parse(path string, out *ServerConfig) error {
 	viper.AutomaticEnv()
 	viper.SetConfigFile(path)
 	viper.SetConfigType("yaml")                  // REQUIRED if the config file does not have the extension in the name
@@ -28,5 +31,10 @@ func ParseFile(path string, out interface{}) error {
 	if err := viper.Unmarshal(&out); err != nil {
 		log.Fatal(err)
 	}
+	err = env.Parse(out)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	return nil
 }
