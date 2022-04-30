@@ -49,6 +49,11 @@ func (s *APIServer) UpdateParam() echo.HandlerFunc {
 			s.l.Warn("OK")
 		}
 		s.s.Mp.PrintAll()
+		if s.c.StoreInterval == 0 {
+			if err := s.s.W.WriteEvent(s.s.Mp); err != nil {
+				s.l.Error("error save metric pool after request: ", err)
+			}
+		}
 		return c.HTML(http.StatusOK, "")
 	}
 }
@@ -93,6 +98,11 @@ func (s *APIServer) UpdateJSON() echo.HandlerFunc {
 		v, _ := sMtrx.GetValue()
 		s.l.Info(" /update/  mtrx object from storage  ", sMtrx, "dalta: ", d, "  value: ", v)
 		// s.s.Mp.PrintAll()
+		if s.c.StoreInterval == 0 {
+			if err := s.s.W.WriteEvent(s.s.Mp); err != nil {
+				s.l.Error("error save metric pool after request: ", err)
+			}
+		}
 		return c.String(http.StatusOK, string(body))
 
 	}

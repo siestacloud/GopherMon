@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/labstack/echo/v4"
+	"github.com/siestacloud/service-monitoring/internal/mtrx"
 	"github.com/siestacloud/service-monitoring/internal/server/config"
 	"github.com/siestacloud/service-monitoring/internal/storage"
 
@@ -24,18 +25,37 @@ type APIServer struct {
 }
 
 //New return point to new server.
-func New(config *config.ServerConfig) *APIServer {
+func New(config *config.ServerConfig) (*APIServer, error) {
+	sf, err := storage.NewStorage(config.StoreFile)
+	if err != nil {
+		return nil, err
+	}
+
+	if config.Restore {
+
+		mp, err := sf.ReadEvent()
+		if err != nil {
+			return nil, err
+		}
+		sf.Mp = mp
+		if mp == nil {
+			sf.Mp = mtrx.NewMetricsPool()
+		}
+
+	}
+
 	return &APIServer{
-		s: storage.New(),
+		s: sf,
 		l: logrus.New(),
 		e: echo.New(),
 		c: config,
-	}
+	}, nil
 }
 
 //Start - method start server
 func (s *APIServer) Start() error {
-
+	s.l.Warn(s.s.Mp)
+	// var err error
 	// Set up a channel to listen to for interrupt signals.
 	var runChan = make(chan os.Signal, 1)
 
@@ -44,10 +64,16 @@ func (s *APIServer) Start() error {
 
 	ctx, cancel := context.WithTimeout(
 		context.Background(),
-		s.c.Server.Timeout.Server*time.Second,
+		time.Duration(s.c.Server.Timeout.Server)*time.Second,
 	)
 	defer func() {
 		time.Sleep(time.Second * 4)
+		s.l.Warn("Server saving metrics pool...")
+		if err := s.s.W.WriteEvent(s.s.Mp); err != nil {
+			s.l.Error("failed save metrics pool: ", err)
+			cancel()
+		}
+
 		s.l.Info("Server was gracefully shutdown")
 		cancel()
 	}()
@@ -71,6 +97,9 @@ func (s *APIServer) Start() error {
 			s.l.Info(err)
 		}
 	}()
+	if s.c.StoreInterval != 0 {
+		go s.StoreInterval()
+	}
 
 	// Block on this let know, why the server is shutting down
 	interrupt := <-runChan
@@ -108,4 +137,15 @@ func (s *APIServer) configureEchoRouter() {
 	s.e.GET("/value/:type/:name", s.ShowMetric())
 	s.e.POST("/value/", s.ShowMetricJSON())
 	s.e.GET("/", s.ShowAllMetrics())
+}
+
+func (s *APIServer) StoreInterval() {
+	for {
+
+		time.Sleep(time.Second * time.Duration(s.c.StoreInterval))
+		if err := s.s.W.WriteEvent(s.s.Mp); err != nil {
+			s.l.Error("error store interval: ", err)
+		}
+		s.l.Info("Storage update")
+	}
 }

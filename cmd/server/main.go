@@ -20,7 +20,10 @@ func main() {
 		log.Fatal(err)
 	}
 	log.Println(cfg)
-	s := server.New(&cfg)
+	s, err := server.New(&cfg)
+	if err != nil {
+		log.Fatal(err)
+	}
 	if err = s.Start(); err != nil {
 		os.Exit(0)
 	}
