@@ -12,9 +12,9 @@ type Server struct {
 	LogFile  string `mapstructure:"log_file"`
 	Address  string `env:"ADDRESS" envDefault:"localhost:8080" mapstructure:"address"`
 	// StoreFile     string `env:"STORE_FILE" envDefault:"/tmp/devops-metrics-db.json" mapstructure:"storefile"`
-	// Restore       bool   `env:"RESTORE" envDefault:"true" mapstructure:"restore"`
-	StoreInterval time.Duration `env:"STORE_INTERVAL" envDefault:"300" mapstructure:"storeinterval"`
-	Timeout       struct {
+	Restore bool `env:"RESTORE" envDefault:"true" mapstructure:"restore"`
+	// StoreInterval time.Duration `env:"STORE_INTERVAL" envDefault:"300" mapstructure:"storeinterval"`
+	Timeout struct {
 		// Server is the general server timeout to use
 		// for graceful shutdowns
 		Server time.Duration `mapstructure:"server"`
