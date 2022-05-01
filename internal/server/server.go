@@ -77,9 +77,9 @@ func (s *APIServer) Start() error {
 
 	server := &http.Server{
 		Addr:         s.c.Address,
-		ReadTimeout:  s.c.Server.Timeout.Read * time.Second,
-		WriteTimeout: s.c.Server.Timeout.Write * time.Second,
-		IdleTimeout:  s.c.Server.Timeout.Idle * time.Second,
+		ReadTimeout:  time.Duration(s.c.Server.Timeout.Read) * time.Second,
+		WriteTimeout: time.Duration(s.c.Server.Timeout.Write) * time.Second,
+		IdleTimeout:  time.Duration(s.c.Server.Timeout.Idle) * time.Second,
 	}
 
 	if err := s.configureLogger(); err != nil {
