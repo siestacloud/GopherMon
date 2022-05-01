@@ -140,7 +140,6 @@ func (s *APIServer) configureEchoRouter() {
 
 func (s *APIServer) StoreInterval() {
 	for {
-
 		time.Sleep(time.Second * time.Duration(s.c.StoreInterval))
 		if err := s.s.WriteStorage(); err != nil {
 			s.l.Error("error store interval: ", err)
