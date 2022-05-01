@@ -13,6 +13,7 @@ var (
 	cfg config.ServerConfig
 )
 
+//main entry point
 func main() {
 
 	err := config.Parse(cli.ConfigPath, &cfg)
