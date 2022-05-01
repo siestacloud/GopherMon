@@ -116,7 +116,7 @@ func url() {
 			SetBody(metric).
 			Post("http://" + cfg.Address + "/update/")
 		if err != nil {
-			// fmt.Println("resp err:  ", responseErr)
+			fmt.Println("resp err:  ", responseErr)
 			// log.Println("resp err:: ", err)
 		}
 
