@@ -47,16 +47,16 @@ func (s *APIServer) Start() error {
 	// of an OS interrupt (defers the cancel just in case)
 	ctx, cancel := context.WithTimeout(
 		context.Background(),
-		s.c.Server.Timeout.Server,
+		time.Duration(s.c.Server.Timeout.Server)*time.Second,
 	)
 
 	defer cancel()
 
 	server := &http.Server{
 		Addr:         s.c.Address,
-		ReadTimeout:  s.c.Server.Timeout.Read * time.Second,
-		WriteTimeout: s.c.Server.Timeout.Write * time.Second,
-		IdleTimeout:  s.c.Server.Timeout.Idle * time.Second,
+		ReadTimeout:  time.Duration(s.c.Server.Timeout.Read) * time.Second,
+		WriteTimeout: time.Duration(s.c.Server.Timeout.Write) * time.Second,
+		IdleTimeout:  time.Duration(s.c.Server.Timeout.Idle) * time.Second,
 	}
 
 	if err := s.configureLogger(); err != nil {
