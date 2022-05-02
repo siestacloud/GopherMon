@@ -61,7 +61,7 @@ func (s *APIServer) Start() error {
 
 	ctx, cancel := context.WithTimeout(
 		context.Background(),
-		s.c.Server.Timeout.Server,
+		10*time.Second,
 	)
 	// defer cancel()
 	defer func() {

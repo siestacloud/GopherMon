@@ -24,9 +24,9 @@ import (
 // MyApiError — описание ошибки при неверном запросе
 type (
 	Config struct {
-		Address        string        `env:"ADDRESS" envDefault:"localhost:8080"`
-		PollInterval   time.Duration `env:"POLL_INTERVAL" envDefault:"2s"`
-		ReportInterval time.Duration `env:"REPORT_INTERVAL" envDefault:"10s"`
+		Address        string        `env:"ADDRESS"`
+		PollInterval   time.Duration `env:"POLL_INTERVAL"`
+		ReportInterval time.Duration `env:"REPORT_INTERVAL"`
 	}
 
 	APIError struct {
