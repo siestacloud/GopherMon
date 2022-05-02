@@ -24,9 +24,9 @@ import (
 // MyApiError — описание ошибки при неверном запросе
 type (
 	Config struct {
-		Address        string        `env:"ADDRESS"`
-		PollInterval   time.Duration `env:"POLL_INTERVAL"`
-		ReportInterval time.Duration `env:"REPORT_INTERVAL"`
+		Address        string        `env:"ADDRESS" envDefault:"localhost:8080"`
+		PollInterval   time.Duration `env:"POLL_INTERVAL" envDefault:"2s"`
+		ReportInterval time.Duration `env:"REPORT_INTERVAL" envDefault:"10s"`
 	}
 
 	APIError struct {
@@ -40,22 +40,19 @@ var (
 	cms runtime.MemStats
 	mp  *mtrx.MetricsPool
 	err error
-	cfg = Config{
-		Address:        "localhost:8080",
-		PollInterval:   time.Duration(2) * time.Second,
-		ReportInterval: time.Duration(10) * time.Second,
-	}
+	cfg = Config{}
 )
 
 func main() {
-	err := env.Parse(&cfg)
-	if err != nil {
-		log.Fatal(err)
-	}
 	flag.StringVar(&cfg.Address, "a", "localhost:8080", "Address for server. Possible values: localhost:8080")
 	flag.DurationVar(&cfg.PollInterval, "p", 2000000000, "Poll interval. Possible values: 1s 12s 1m")
 	flag.DurationVar(&cfg.ReportInterval, "r", 10000000000, "Report interval. Possible values: 1s 12s 1m")
 	flag.Parse()
+
+	err := env.Parse(&cfg)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	ctx, cansel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT)
 	fmt.Println(cfg)
