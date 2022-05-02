@@ -2,7 +2,6 @@ package server
 
 import (
 	"context"
-	"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -25,38 +24,62 @@ type APIServer struct {
 }
 
 //New return point to new server.
-func New(config *config.ServerConfig) *APIServer {
+func New(config *config.ServerConfig) (*APIServer, error) {
+	sf, err := storage.NewStorage(config.StoreFile)
+	if err != nil {
+		return nil, err
+	}
+	if config.StoreFile != "" {
+		if config.Restore {
+			err := sf.ReadStorage()
+			if err != nil {
+
+				return nil, err
+			}
+		}
+	}
+
 	return &APIServer{
-		s: storage.New(),
+		s: sf,
 		l: logrus.New(),
 		e: echo.New(),
 		c: config,
-	}
+	}, nil
 }
 
 //Start - method start server
 func (s *APIServer) Start() error {
-
+	s.l.Warn(s.s.Mp)
+	// var err error
 	// Set up a channel to listen to for interrupt signals.
 	var runChan = make(chan os.Signal, 1)
 
 	// Handle ctrl+c/ctrl+x interrupt
 	signal.Notify(runChan, os.Interrupt, syscall.SIGTSTP)
 
-	// Set up a context to allow for graceful server shutdowns in the event
-	// of an OS interrupt (defers the cancel just in case)
 	ctx, cancel := context.WithTimeout(
 		context.Background(),
-		s.c.Server.Timeout.Server,
+		time.Duration(s.c.Server.Timeout.Server)*time.Second,
 	)
+	// defer cancel()
+	defer func() {
+		s.l.Warn("Server saving metrics pool...")
+		if s.c.StoreFile != "" {
+			if err := s.s.WriteStorage(); err != nil {
+				s.l.Error("failed save metrics pool: ", err)
+				cancel()
+			}
+		}
 
-	defer cancel()
+		s.l.Info("Server was gracefully shutdown")
+		cancel()
+	}()
 
 	server := &http.Server{
 		Addr:         s.c.Address,
-		ReadTimeout:  s.c.Server.Timeout.Read * time.Second,
-		WriteTimeout: s.c.Server.Timeout.Write * time.Second,
-		IdleTimeout:  s.c.Server.Timeout.Idle * time.Second,
+		ReadTimeout:  time.Duration(s.c.Server.Timeout.Read) * time.Second,
+		WriteTimeout: time.Duration(s.c.Server.Timeout.Write) * time.Second,
+		IdleTimeout:  time.Duration(s.c.Server.Timeout.Idle) * time.Second,
 	}
 
 	if err := s.configureLogger(); err != nil {
@@ -68,10 +91,15 @@ func (s *APIServer) Start() error {
 	// Run the server on a new goroutine
 	go func() {
 		if err := s.e.StartServer(server); err != nil {
-			s.l.Info("Fail starting http server: ", err)
-			log.Fatal()
+			s.l.Info(err)
 		}
 	}()
+
+	if s.c.StoreFile != "" {
+		// if s.c.StoreInterval != 0 {
+		go s.StoreInterval()
+		// }
+	}
 
 	// Block on this let know, why the server is shutting down
 	interrupt := <-runChan
@@ -84,7 +112,7 @@ func (s *APIServer) Start() error {
 		s.l.Errorf("Server was unable to gracefully shutdown due to err: %+v", err)
 		return err
 	}
-	s.l.Info("Server was gracefully shutdown")
+
 	return nil
 }
 
@@ -109,16 +137,14 @@ func (s *APIServer) configureEchoRouter() {
 	s.e.GET("/value/:type/:name", s.ShowMetric())
 	s.e.POST("/value/", s.ShowMetricJSON())
 	s.e.GET("/", s.ShowAllMetrics())
+}
 
-	// Prometheus endpoint
-	// s.e.Use(middleware.Logger())
-	// s.e.Use(middleware.Recover())
-	// s.e.GET("/", s.handlers.Update())
-	// a.e.GET("/success", s.handleSuccess)
-	// a.e.POST("/pull", s.handleUploadPost)
-	// a.e.GET("/metrics", Handler(promhttp.Handler())
-	// a.e.GET("/css/*", s.staticHandle)
-	// a.e.GET("/js/*", s.staticHandle)
-	// a.e.GET("/img/*", s.staticHandle)
-
+func (s *APIServer) StoreInterval() {
+	for {
+		time.Sleep(time.Second * time.Duration(300))
+		if err := s.s.WriteStorage(); err != nil {
+			s.l.Error("error store interval: ", err)
+		}
+		s.l.Info("Storage update")
+	}
 }

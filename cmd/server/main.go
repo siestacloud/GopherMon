@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 
@@ -14,13 +15,16 @@ var (
 )
 
 func main() {
-
+	fmt.Println("HERE")
 	err := config.Parse(cli.ConfigPath, &cfg)
 	if err != nil {
 		log.Fatal(err)
 	}
 	log.Println(cfg)
-	s := server.New(&cfg)
+	s, err := server.New(&cfg)
+	if err != nil {
+		log.Fatal(err)
+	}
 	if err = s.Start(); err != nil {
 		os.Exit(0)
 	}

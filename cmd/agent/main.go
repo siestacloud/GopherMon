@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"math/rand"
 	"os"
@@ -16,9 +17,10 @@ import (
 	"github.com/caarlos0/env/v6"
 	"github.com/go-resty/resty/v2"
 	"github.com/siestacloud/service-monitoring/internal/mtrx"
+	"github.com/sirupsen/logrus"
 )
 
-// MyApiError — описание ошибки при неверном запросе.
+// MyApiError — описание ошибки при неверном запросе
 type (
 	Config struct {
 		Address        string        `env:"ADDRESS"`
@@ -100,20 +102,22 @@ func postMetrics(ctx context.Context, reportInterval time.Duration) {
 
 //
 func url() {
+	logger := logrus.New()
+	logger.Out = ioutil.Discard
 
 	for _, metric := range mp.M {
-		fmt.Println(metric, "   ", metric.Value)
-		client := resty.New().SetRetryCount(2).
+		// fmt.Println(metric, "   ", metric.Value)
+		client := resty.New().SetRetryCount(2).SetLogger(logger).
 			SetRetryWaitTime(1 * time.Second).
 			SetRetryMaxWaitTime(2 * time.Second)
 		var responseErr APIError
 		_, err := client.R().
-			SetError(&responseErr).
+			SetError(&responseErr).SetDoNotParseResponse(false).
 			SetBody(metric).
 			Post("http://" + cfg.Address + "/update/")
 		if err != nil {
 			fmt.Println("resp err:  ", responseErr)
-			log.Println("resp err:: ", err)
+			// log.Println("resp err:: ", err)
 		}
 
 		// fmt.Println(metric, "   ", metric.Value)
