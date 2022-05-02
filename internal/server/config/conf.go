@@ -10,10 +10,10 @@ type ServerConfig struct {
 type Server struct {
 	LogLevel      string        `mapstructure:"log_level"`
 	LogFile       string        `mapstructure:"log_file"`
-	Address       string        `env:"ADDRESS" envDefault:"localhost:8080" mapstructure:"address"`
-	Restore       bool          `env:"RESTORE" envDefault:"true" mapstructure:"restore"`
-	StoreInterval time.Duration `env:"STORE_INT" envDefault:"300s" mapstructure:"storeinterval"`
-	StoreFile     string        `env:"STORE_FILE" envDefault:"/tmp/devops-metrics-db.json" mapstructure:"storefile"`
+	Address       string        `env:"ADDRESS" mapstructure:"address"`
+	Restore       bool          `env:"RESTORE" mapstructure:"restore"`
+	StoreInterval time.Duration `env:"STORE_INTERVAL" mapstructure:"storeinterval"`
+	StoreFile     string        `env:"STORE_FILE" mapstructure:"storefile"`
 	Timeout       struct {
 		// Server is the general server timeout to use
 		// for graceful shutdowns
