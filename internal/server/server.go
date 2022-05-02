@@ -29,7 +29,7 @@ func New(config *config.ServerConfig) (*APIServer, error) {
 	if err != nil {
 		return nil, err
 	}
-	if config.StoreFile != "" {
+	if config.StoreFile != "" { //Если передан путь до файла и указан флаг восстановить, метрики будут прочитаны из хранилища
 		if config.Restore {
 			err := sf.ReadStorage()
 			if err != nil {

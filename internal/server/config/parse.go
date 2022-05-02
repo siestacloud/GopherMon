@@ -33,7 +33,7 @@ func Parse(c *CLI, cfg *ServerConfig) error {
 		log.Fatal(err)
 	}
 
-	flag.DurationVar(&cfg.StoreInterval, "i", 300, "Duration time of saving. Possible values: int")
+	flag.DurationVar(&cfg.StoreInterval, "i", 300000000000, "Duration time of saving. Possible values: int")
 	flag.StringVar(&cfg.StoreFile, "f", "/tmp/devops-metrics-db.json", "Path to store file. Possible values: /path/to/file")
 	flag.StringVar(&cfg.Address, "a", "localhost:8080", "Address for server. Possible values: localhost:8080")
 	flag.BoolVar(&cfg.Restore, "r", true, "Restore metrics pool. Possible values: true false")
