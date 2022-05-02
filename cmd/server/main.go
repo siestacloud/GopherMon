@@ -19,7 +19,6 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Println(cfg)
 	s, err := server.New(&cfg)
 	if err != nil {
 		log.Fatal(err)

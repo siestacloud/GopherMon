@@ -17,18 +17,18 @@ type Server struct {
 	Timeout       struct {
 		// Server is the general server timeout to use
 		// for graceful shutdowns
-		Server int `mapstructure:"server"`
+		Server time.Duration `mapstructure:"server"`
 
 		// Write is the amount of time to wait until an HTTP server
 		// write opperation is cancelled
-		Write int `mapstructure:"write"`
+		Write time.Duration `mapstructure:"write"`
 
 		// Read is the amount of time to wait until an HTTP server
 		// read operation is cancelled
-		Read int `mapstructure:"read"`
+		Read time.Duration `mapstructure:"read"`
 
 		// Read is the amount of time to wait
 		// until an IDLE HTTP session is closed
-		Idle int `mapstructure:"idle"`
+		Idle time.Duration `mapstructure:"idle"`
 	} `mapstructure:"timeout"`
 }
