@@ -29,7 +29,7 @@ func New(config *config.ServerConfig) (*APIServer, error) {
 	if err != nil {
 		return nil, err
 	}
-	if config.StoreFile != "" {
+	if config.StoreFile != "" { //Если передан путь до файла и указан флаг восстановить, метрики будут прочитаны из хранилища
 		if config.Restore {
 			err := sf.ReadStorage()
 			if err != nil {
@@ -49,7 +49,9 @@ func New(config *config.ServerConfig) (*APIServer, error) {
 
 //Start - method start server
 func (s *APIServer) Start() error {
-	s.l.Warn(s.s.Mp)
+	s.l.Warn("cfg: ", s.c)
+	s.l.Warn("mtrx from storage: ", s.s.Mp)
+
 	// var err error
 	// Set up a channel to listen to for interrupt signals.
 	var runChan = make(chan os.Signal, 1)
@@ -59,7 +61,7 @@ func (s *APIServer) Start() error {
 
 	ctx, cancel := context.WithTimeout(
 		context.Background(),
-		time.Duration(s.c.Server.Timeout.Server)*time.Second,
+		10*time.Second,
 	)
 	// defer cancel()
 	defer func() {
@@ -76,10 +78,10 @@ func (s *APIServer) Start() error {
 	}()
 
 	server := &http.Server{
-		Addr:         s.c.Address,
-		ReadTimeout:  time.Duration(s.c.Server.Timeout.Read) * time.Second,
-		WriteTimeout: time.Duration(s.c.Server.Timeout.Write) * time.Second,
-		IdleTimeout:  time.Duration(s.c.Server.Timeout.Idle) * time.Second,
+		Addr: s.c.Address,
+		// ReadTimeout:  s.c.Server.Timeout.Read,
+		// WriteTimeout: s.c.Server.Timeout.Write,
+		// IdleTimeout:  s.c.Server.Timeout.Idle,
 	}
 
 	if err := s.configureLogger(); err != nil {
@@ -96,9 +98,10 @@ func (s *APIServer) Start() error {
 	}()
 
 	if s.c.StoreFile != "" {
-		// if s.c.StoreInterval != 0 {
-		go s.StoreInterval()
-		// }
+		if s.c.StoreInterval != 0 {
+
+			go s.StoreInterval()
+		}
 	}
 
 	// Block on this let know, why the server is shutting down
@@ -141,7 +144,7 @@ func (s *APIServer) configureEchoRouter() {
 
 func (s *APIServer) StoreInterval() {
 	for {
-		time.Sleep(time.Second * time.Duration(300))
+		time.Sleep(s.c.StoreInterval)
 		if err := s.s.WriteStorage(); err != nil {
 			s.l.Error("error store interval: ", err)
 		}
