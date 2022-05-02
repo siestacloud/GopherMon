@@ -16,6 +16,7 @@ type CLI struct {
 
 var ()
 
+//
 func Parse(c *CLI, cfg *ServerConfig) error {
 	viper.AutomaticEnv()
 	viper.SetConfigFile(c.ConfigPath)
