@@ -18,7 +18,7 @@ func (s *APIServer) ShowStatus(next echo.HandlerFunc) echo.HandlerFunc {
 			return next(c)
 		}
 
-		c.Response().Header().Add("Accept-Encoding", "gzip")
+		c.Response().Header().Add("Content-Encoding", "gzip")
 		// s.mutex.Lock()
 		// defer s.mutex.Unlock()
 		// s.RequestCount++
