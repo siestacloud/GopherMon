@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"errors"
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -39,24 +40,28 @@ var (
 	cms runtime.MemStats
 	mp  *mtrx.MetricsPool
 	err error
-	cfg = Config{
-		Address:        "127.0.0.1:8080",
-		PollInterval:   time.Duration(2) * time.Second,
-		ReportInterval: time.Duration(10) * time.Second,
-	}
+	cfg = Config{}
 )
 
 func main() {
+	flag.StringVar(&cfg.Address, "a", "localhost:8080", "Address for server. Possible values: localhost:8080")
+	flag.DurationVar(&cfg.PollInterval, "p", 2000000000, "Poll interval. Possible values: 1s 12s 1m")
+	flag.DurationVar(&cfg.ReportInterval, "r", 10000000000, "Report interval. Possible values: 1s 12s 1m")
+	flag.Parse()
+
 	err := env.Parse(&cfg)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	ctx, cansel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT)
+	fmt.Println(cfg)
 	defer cansel()
+
 	//Задаем интервал сбора метрик
 	pollInterval := cfg.PollInterval
 	reportInterval := cfg.ReportInterval
+
 	go takeMetrics(ctx, pollInterval)
 	go postMetrics(ctx, reportInterval)
 
@@ -116,8 +121,8 @@ func url() {
 			SetBody(metric).
 			Post("http://" + cfg.Address + "/update/")
 		if err != nil {
-			fmt.Println("resp err:  ", responseErr)
-			// log.Println("resp err:: ", err)
+			// fmt.Println("resp err:  ", responseErr)
+			log.Println("AGENT resp err:: ", err)
 		}
 
 		// fmt.Println(metric, "   ", metric.Value)
