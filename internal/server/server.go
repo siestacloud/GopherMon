@@ -141,6 +141,7 @@ func (s *APIServer) configureEchoRouter() {
 	s.e.POST("/update/:type/:name/:value", s.UpdateParam())
 	s.e.GET("/value/:type/:name", s.ShowMetric())
 	s.e.POST("/update", s.UpdateJSON())
+	s.e.POST("/update/", s.UpdateJSON())
 	s.e.POST("/value/", s.ShowMetricJSON())
 	s.e.GET("/", s.ShowAllMetrics())
 }
