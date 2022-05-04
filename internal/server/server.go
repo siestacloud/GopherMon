@@ -134,6 +134,7 @@ func (s *APIServer) configureLogger() error {
 
 //configureRouter Set handlers for URL path's
 func (s *APIServer) configureEchoRouter() {
+	s.e.Use(s.ShowStatus)
 	s.e.POST("/update/:type/:name/:value", s.UpdateParam())
 	s.e.POST("/update", s.UpdateJSON())
 	s.e.POST("/update/", s.UpdateJSON())
