@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 	"github.com/siestacloud/service-monitoring/internal/server/config"
 	"github.com/siestacloud/service-monitoring/internal/storage"
 
@@ -134,9 +135,12 @@ func (s *APIServer) configureLogger() error {
 
 //configureRouter Set handlers for URL path's
 func (s *APIServer) configureEchoRouter() {
+	// s.e.Use(s.ShowStatus)
+	s.e.Use(middleware.GzipWithConfig(middleware.GzipConfig{
+		Level: 5,
+	}))
 	s.e.POST("/update/:type/:name/:value", s.UpdateParam())
 	s.e.GET("/value/:type/:name", s.ShowMetric())
-	s.e.Use(s.ShowStatus)
 	s.e.POST("/update", s.UpdateJSON())
 	s.e.POST("/value/", s.ShowMetricJSON())
 	s.e.GET("/", s.ShowAllMetrics())
