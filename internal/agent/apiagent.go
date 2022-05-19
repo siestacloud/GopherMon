@@ -65,10 +65,12 @@ func (c *APIAgent) SendMetric(name string, m *reflect.Value) error {
 	r.Header.Add("Content-Type", "text/plain")
 	dump, _ := httputil.DumpRequest(r, true)
 	fmt.Println(string(dump))
-	_, err = c.client.Do(r)
-	if err == nil {
+	resp, err := c.client.Do(r)
+
+	if err != nil {
 		return err
 	}
+	defer resp.Body.Close()
 	return nil
 }
 
