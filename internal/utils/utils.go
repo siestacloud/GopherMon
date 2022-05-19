@@ -33,12 +33,12 @@ func (m *Metrics) Poll() {
 	mtrx := reflect.ValueOf(metrics).Elem()
 	for i := 0; i < mtrx.NumField(); i++ {
 		f := mtrx.Field(i)
-		switch {
-		case f.CanUint():
+		switch f.Kind() {
+		case reflect.Uint64, reflect.Uint32:
 			m.Gauges_runtime[mtrx.Type().Field(i).Name] = gauge(f.Uint())
-		case f.CanFloat():
+		case reflect.Float32, reflect.Float64:
 			m.Gauges_runtime[mtrx.Type().Field(i).Name] = gauge(f.Float())
-		case f.CanInt():
+		case reflect.Int32, reflect.Int64:
 			m.Gauges_runtime[mtrx.Type().Field(i).Name] = gauge(f.Int())
 		}
 	}
