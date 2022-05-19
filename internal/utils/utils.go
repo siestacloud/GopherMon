@@ -1,9 +1,10 @@
-package mymetrics
+package utils
 
 import (
 	"math/rand"
 	"reflect"
 	"runtime"
+	"time"
 )
 
 type gauge float64
@@ -21,7 +22,7 @@ func (m *Metrics) Init() {
 		"RandomValue": 0,
 	}
 	m.Counters = map[string]counter{
-		"PoolCount": 0,
+		"PollCount": 0,
 	}
 }
 
@@ -29,18 +30,19 @@ func (m *Metrics) Poll() {
 	m.Counters["PollCount"] += 1
 	metrics := &runtime.MemStats{}
 	runtime.ReadMemStats(metrics)
-	mtrx := reflect.ValueOf(metrics)
+	mtrx := reflect.ValueOf(metrics).Elem()
 	for i := 0; i < mtrx.NumField(); i++ {
 		f := mtrx.Field(i)
-		switch f.Kind() {
-		case reflect.Float64:
-			m.Gauges_runtime[f.Elem().Type().Name()] = gauge(f.Float())
-		case reflect.Uint:
-			m.Gauges_runtime[f.Elem().Type().Name()] = gauge(f.Uint())
-		case reflect.Int:
-			m.Gauges_runtime[f.Elem().Type().Name()] = gauge(f.Int())
+		switch {
+		case f.CanUint():
+			m.Gauges_runtime[mtrx.Type().Field(i).Name] = gauge(f.Uint())
+		case f.CanFloat():
+			m.Gauges_runtime[mtrx.Type().Field(i).Name] = gauge(f.Float())
+		case f.CanInt():
+			m.Gauges_runtime[mtrx.Type().Field(i).Name] = gauge(f.Int())
 		}
-
 	}
-	m.Gauges_my["RandomValue"] = gauge(rand.Float64())
+	seed := rand.NewSource(time.Now().UnixNano())
+	r := rand.New(seed)
+	m.Gauges_my["RandomValue"] = gauge(r.Float64())
 }
