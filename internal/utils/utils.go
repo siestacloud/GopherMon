@@ -11,14 +11,14 @@ type gauge float64
 type counter int64
 
 type Metrics struct {
-	Gauges_runtime map[string]gauge
-	Gauges_my      map[string]gauge
-	Counters       map[string]counter
+	GaugesRuntime map[string]gauge
+	GaugesMy      map[string]gauge
+	Counters      map[string]counter
 }
 
 func (m *Metrics) Init() {
-	m.Gauges_runtime = map[string]gauge{}
-	m.Gauges_my = map[string]gauge{
+	m.GaugesRuntime = map[string]gauge{}
+	m.GaugesMy = map[string]gauge{
 		"RandomValue": 0,
 	}
 	m.Counters = map[string]counter{
@@ -35,14 +35,14 @@ func (m *Metrics) Poll() {
 		f := mtrx.Field(i)
 		switch f.Kind() {
 		case reflect.Uint64, reflect.Uint32:
-			m.Gauges_runtime[mtrx.Type().Field(i).Name] = gauge(f.Uint())
+			m.GaugesRuntime[mtrx.Type().Field(i).Name] = gauge(f.Uint())
 		case reflect.Float32, reflect.Float64:
-			m.Gauges_runtime[mtrx.Type().Field(i).Name] = gauge(f.Float())
+			m.GaugesRuntime[mtrx.Type().Field(i).Name] = gauge(f.Float())
 		case reflect.Int32, reflect.Int64:
-			m.Gauges_runtime[mtrx.Type().Field(i).Name] = gauge(f.Int())
+			m.GaugesRuntime[mtrx.Type().Field(i).Name] = gauge(f.Int())
 		}
 	}
 	seed := rand.NewSource(time.Now().UnixNano())
 	r := rand.New(seed)
-	m.Gauges_my["RandomValue"] = gauge(r.Float64())
+	m.GaugesMy["RandomValue"] = gauge(r.Float64())
 }
