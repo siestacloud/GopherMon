@@ -27,6 +27,6 @@ func main() {
 	json.Unmarshal(data, config)
 
 	server := server.New(config)
-	server.Start()
+	log.Fatal(server.Start())
 
 }

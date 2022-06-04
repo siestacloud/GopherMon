@@ -1,22 +1,45 @@
 package server
 
 import (
+	"log"
 	"net/http"
+	"strings"
 )
 
 type APIServer struct {
 	config *Config
 }
 
+type Handler struct {
+	DB Storage
+}
+
 func New(config *Config) *APIServer {
 	return &APIServer{config: config}
 }
 
-func UpdateMetrics(w http.ResponseWriter, r *http.Request) {
+func (handler *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+	API := strings.Split(strings.Trim(r.URL.Path, "/"), "/")
+	if API[0] != "update" {
+		log.Println("Bad Request", r.URL.Path, API)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	log.Println("Good Request", r.URL.Path)
+	log.Printf("DB will set type:%s name:%s value:%s", API[1], API[2], API[3])
+	handler.DB.Set(API[1], API[2], API[3])
+	log.Println(handler.DB)
 	w.WriteHeader(http.StatusOK)
 }
 
 func (s *APIServer) Start() error {
-	http.HandleFunc("/update", UpdateMetrics)
+	updater := new(Handler)
+	updater.DB = new(DB)
+	updater.DB.Init()
+	http.Handle("/update/", updater)
 	return http.ListenAndServe(s.config.BindAddr, nil)
 }

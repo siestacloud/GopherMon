@@ -27,20 +27,13 @@ func (c *APIAgent) Report(ms *utils.Metrics) error {
 			return err
 		}
 	}
-	for name, v := range ms.GaugesMy {
+	for name, v := range ms.Gauges {
 		metric := reflect.ValueOf(v)
 		err := c.SendMetric(name, &metric)
 		if err != nil {
 			return err
 		}
 
-	}
-	for name, v := range ms.GaugesRuntime {
-		metric := reflect.ValueOf(v)
-		err := c.SendMetric(name, &metric)
-		if err != nil {
-			return err
-		}
 	}
 
 	return nil
@@ -50,11 +43,11 @@ func (c *APIAgent) SendMetric(name string, m *reflect.Value) error {
 	var url string
 	switch m.Kind() {
 	case reflect.Uint64, reflect.Uint32:
-		url = fmt.Sprintf("%s/update/%s/%s/%v", c.config.ReportAddr, m.Type().Name(), name, m.Uint())
+		url = fmt.Sprintf("%s/update/%s/%s/%d", c.config.ReportAddr, m.Type().Name(), name, m.Uint())
 	case reflect.Float32, reflect.Float64:
-		url = fmt.Sprintf("%s/update/%s/%s/%v", c.config.ReportAddr, m.Type().Name(), name, m.Float())
+		url = fmt.Sprintf("%s/update/%s/%s/%e", c.config.ReportAddr, m.Type().Name(), name, m.Float())
 	case reflect.Int32, reflect.Int64:
-		url = fmt.Sprintf("%s/update/%s/%s/%v", c.config.ReportAddr, m.Type().Name(), name, m.Int())
+		url = fmt.Sprintf("%s/update/%s/%s/%d", c.config.ReportAddr, m.Type().Name(), name, m.Int())
 	}
 	fmt.Println(url)
 	r, err := http.NewRequest(http.MethodPost, url, nil)
