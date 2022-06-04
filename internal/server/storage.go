@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"strconv"
+	"strings"
 
 	"github.com/MustCo/Mon_go/internal/utils"
 )
@@ -25,18 +26,32 @@ func (db *DB) Init() {
 }
 
 func (db *DB) Set(t, name, val string) error {
-	log.Println(val)
-	switch t {
-	case "Gauge":
-
-		g, err := strconv.ParseFloat(val, 64)
-		log.Printf("Gauge %s %s = %e", name, val, g)
-		db.Metrics.Gauges[name] = utils.Gauge(g)
-		return err
-	case "Counter":
-		ctr, err := strconv.Atoi(val)
-		db.Metrics.Counters[name] = utils.Counter(ctr)
-		return err
+	switch strings.ToLower(t) {
+	case "gauge":
+		if _, ok := db.Metrics.Gauges[name]; ok {
+			var g float64
+			g, err := strconv.ParseFloat(val, 64)
+			if err != nil {
+				return err
+			}
+			log.Printf("Gauge %s %s = %e", name, val, g)
+			db.Metrics.Gauges[name] = utils.Gauge(g)
+			return nil
+		} else {
+			return errors.New("invalid name")
+		}
+	case "counter":
+		if _, ok := db.Metrics.Counters[name]; ok {
+			var ctr int64
+			ctr, err := strconv.ParseInt(val, 10, 64)
+			if err != nil {
+				return err
+			}
+			db.Metrics.Counters[name] = utils.Counter(ctr)
+			return nil
+		} else {
+			return errors.New("invalid name")
+		}
 	default:
 		return errors.New("invalid type")
 	}

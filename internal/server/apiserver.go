@@ -29,9 +29,16 @@ func (handler *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	log.Println("Good Request", r.URL.Path)
-	log.Printf("DB will set type:%s name:%s value:%s", API[1], API[2], API[3])
-	handler.DB.Set(API[1], API[2], API[3])
+	if len(API) < 4 {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+	err := handler.DB.Set(API[1], API[2], API[3])
+	if err != nil {
+		log.Println("Bad Request", r.URL.Path, API)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
 	log.Println(handler.DB)
 	w.WriteHeader(http.StatusOK)
 }
