@@ -20,19 +20,8 @@ type Metrics struct {
 }
 
 func (m *Metrics) Init() {
-	m.Gauges = map[string]Gauge{
-		"RandomValue": 0,
-	}
-	m.Counters = map[string]Counter{
-		"PollCount": 0,
-	}
-	m.Poll()
-	for k, _ := range m.Counters {
-		m.Counters[k] = 0
-	}
-	for k, _ := range m.Gauges {
-		m.Gauges[k] = 0
-	}
+	m.Gauges = map[string]Gauge{}
+	m.Counters = map[string]Counter{}
 }
 
 func (m *Metrics) Poll() {

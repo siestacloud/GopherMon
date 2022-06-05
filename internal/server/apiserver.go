@@ -20,13 +20,13 @@ func New(config *Config) *APIServer {
 
 func (handler *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		w.WriteHeader(http.StatusMethodNotAllowed)
+		http.Error(w, "Bad Request", http.StatusMethodNotAllowed)
 		return
 	}
 	API := strings.Split(strings.Trim(r.URL.Path, "/"), "/")
 	if API[0] != "update" {
 		log.Println("Bad Request", r.URL.Path, API)
-		w.WriteHeader(http.StatusBadRequest)
+		http.Error(w, "Bad Request", http.StatusBadRequest)
 		return
 	}
 	if len(API) < 4 {
@@ -36,11 +36,10 @@ func (handler *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	err := handler.DB.Set(API[1], API[2], API[3])
 	if err != nil {
 		log.Println("Bad Request", r.URL.Path, API)
-		w.WriteHeader(http.StatusBadRequest)
+		http.Error(w, "Bad Request", http.StatusNotImplemented)
 		return
 	}
 	log.Println(handler.DB)
-	w.WriteHeader(http.StatusOK)
 }
 
 func (s *APIServer) Start() error {
