@@ -1,6 +1,7 @@
 package server
 
 import (
+	"errors"
 	"log"
 	"net/http"
 	"strings"
@@ -34,9 +35,15 @@ func (handler *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	err := handler.DB.Set(API[1], API[2], API[3])
-	if err != nil {
+	switch err {
+	case errors.New("invalid type"):
 		log.Println("Bad Request", r.URL.Path, API)
-		http.Error(w, "Bad Request", http.StatusNotImplemented)
+		http.Error(w, err.Error(), http.StatusNotImplemented)
+		return
+	case nil:
+	default:
+		log.Println("Bad Request", r.URL.Path, API)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 	log.Println(handler.DB)
