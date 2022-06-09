@@ -49,6 +49,7 @@ func TestUpdateHandler_ServeHTTP(t *testing.T) {
 
 			tt.handler.ServeHTTP(tt.args.w, tt.args.r)
 			res := tt.args.w.Result()
+			defer res.Body.Close()
 			assert.Equal(t, tt.want.sc, res.StatusCode)
 			assert.Equal(t, tt.want.db, tt.handler.DB)
 		})
