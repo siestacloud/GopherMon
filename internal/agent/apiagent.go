@@ -3,7 +3,6 @@ package agent
 import (
 	"fmt"
 	"net/http"
-	"net/http/httputil"
 	"reflect"
 	"time"
 
@@ -49,15 +48,12 @@ func (c *APIAgent) SendMetric(name string, m *reflect.Value) error {
 	case reflect.Int32, reflect.Int64:
 		url = fmt.Sprintf("%s/update/%s/%s/%d", c.config.ReportAddr, m.Type().Name(), name, m.Int())
 	}
-	fmt.Println(url)
 	r, err := http.NewRequest(http.MethodPost, url, nil)
 	if err != nil {
 		return err
 	}
 
 	r.Header.Add("Content-Type", "text/plain")
-	dump, _ := httputil.DumpRequest(r, true)
-	fmt.Println(string(dump))
 	resp, err := c.client.Do(r)
 
 	if err != nil {

@@ -16,6 +16,12 @@ type Storage interface {
 	Set(t, name, value string) error
 }
 
+func NewDB() *DB {
+	db := new(DB)
+	db.Init()
+	return db
+}
+
 type DB struct {
 	Metrics *utils.Metrics
 }
@@ -52,7 +58,7 @@ func (db *DB) Set(t, name, val string) error {
 }
 
 func (db *DB) Get(t, name string) (utils.Gauge, error) {
-	switch t {
+	switch strings.ToLower(t) {
 	case "gauge":
 		return db.Metrics.Gauges[name], nil
 	case "counter":

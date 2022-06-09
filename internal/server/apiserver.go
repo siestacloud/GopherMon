@@ -10,7 +10,7 @@ type APIServer struct {
 	config *Config
 }
 
-type Handler struct {
+type UpdateHandler struct {
 	DB Storage
 }
 
@@ -18,7 +18,13 @@ func New(config *Config) *APIServer {
 	return &APIServer{config: config}
 }
 
-func (handler *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func NewUpdateHandler() *UpdateHandler {
+	updater := new(UpdateHandler)
+	updater.DB = NewDB()
+	return updater
+}
+
+func (handler *UpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Invalid method", http.StatusMethodNotAllowed)
 		return
@@ -50,9 +56,7 @@ func (handler *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *APIServer) Start() error {
-	updater := new(Handler)
-	updater.DB = new(DB)
-	updater.DB.Init()
+	updater := NewUpdateHandler()
 	http.Handle("/update/", updater)
 	return http.ListenAndServe(s.config.BindAddr, nil)
 }
