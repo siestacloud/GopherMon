@@ -8,7 +8,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-// CLI .
+// CLI ..
 type CLI struct {
 	ConfigPath string `help:"Config path" type:"path" default:"config.yaml"`
 }

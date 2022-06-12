@@ -203,24 +203,26 @@ func mtrxMotion(c int64, cms *runtime.MemStats) (*mtrx.MetricsPool, error) {
 	if !mtrxPool.Add(randomValue.ID, *randomValue) {
 		return nil, errors.New("unable add PollCount mtrx into MetricsPool: " + randomValue.GetID() + randomValue.GetType())
 	}
-	//Создаю метрики runtime
-	val := reflect.ValueOf(cms).Elem()
-	for i := 0; i < val.NumField(); i++ {
-		id := val.Type().Field(i).Name
-		v := fmt.Sprint(val.FieldByName(val.Type().Field(i).Name))
 
-		m := mtrx.NewMetric()
-		if err := m.SetID(id); err != nil {
+	//Создаю метрики из пакета runtime / у cms тип runtime.MemStats
+	val := reflect.ValueOf(cms).Elem()
+	//итерируюсь по всем полям cms, runtime.MemStats
+
+	for i := 0; i < val.NumField(); i++ {
+		id := val.Type().Field(i).Name                             //достаю имя поля
+		v := fmt.Sprint(val.FieldByName(val.Type().Field(i).Name)) // значение в этом поле
+
+		m := mtrx.NewMetric()               // создаю свою метрику
+		if err := m.SetID(id); err != nil { // у обьекта метрики определены методы, через которые заполняются поля имя метрики значение и тип
 			return nil, err
 		}
 		if err := m.SetType("gauge"); err != nil {
 			return nil, err
 		}
 		if err := m.SetValue(v); err != nil {
-
 			continue
 		}
-		if !mtrxPool.Add(m.ID, *m) {
+		if !mtrxPool.Add(m.ID, *m) { // Метрика добавляется в общий пул (мапку)
 			return nil, errors.New("unable add runtime mtrx into MetricsPool: " + m.GetID() + "  " + m.GetType())
 		}
 	}
