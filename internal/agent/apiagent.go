@@ -1,7 +1,9 @@
 package agent
 
 import (
+	"context"
 	"fmt"
+	"log"
 	"net/http"
 	"reflect"
 	"time"
@@ -34,36 +36,39 @@ func (c *APIAgent) Report(ms *utils.Metrics) error {
 		}
 
 	}
-
 	return nil
 }
 
 func (c *APIAgent) SendMetric(name string, m *reflect.Value) error {
 	var url string
+	url = fmt.Sprintf("http://%s/update/%s/%s/", c.config.ReportAddr, m.Type().Name(), name)
 	switch m.Kind() {
 	case reflect.Uint64, reflect.Uint32:
-		url = fmt.Sprintf("%s/update/%s/%s/%d", c.config.ReportAddr, m.Type().Name(), name, m.Uint())
+		url += fmt.Sprintf("%d", m.Uint())
 	case reflect.Float32, reflect.Float64:
-		url = fmt.Sprintf("%s/update/%s/%s/%e", c.config.ReportAddr, m.Type().Name(), name, m.Float())
+		url += fmt.Sprintf("%e", m.Float())
 	case reflect.Int32, reflect.Int64:
-		url = fmt.Sprintf("%s/update/%s/%s/%d", c.config.ReportAddr, m.Type().Name(), name, m.Int())
+		url += fmt.Sprintf("%d", m.Int())
 	}
+
 	r, err := http.NewRequest(http.MethodPost, url, nil)
 	if err != nil {
 		return err
 	}
 
 	r.Header.Add("Content-Type", "text/plain")
+	log.Printf("Send metric: %s", url)
 	resp, err := c.client.Do(r)
 
 	if err != nil {
 		return err
 	}
 	defer resp.Body.Close()
+
 	return nil
 }
 
-func (c *APIAgent) Start() error {
+func (c *APIAgent) Start(ctx context.Context) error {
 	m := new(utils.Metrics)
 	c.client = http.Client{}
 	reports := time.NewTicker(time.Duration(c.config.ReportInterval) * time.Second)
@@ -73,14 +78,11 @@ func (c *APIAgent) Start() error {
 		select {
 		case <-reports.C:
 			c.Report(m)
-			_, err := fmt.Println("Report metrics")
-			if err != nil {
-				return err
-			}
 		case <-polls.C:
 			m.Poll()
-			fmt.Println("Poll metrics")
-
+		case <-ctx.Done():
+			log.Println("Exit by context")
+			return nil
 		}
 	}
 

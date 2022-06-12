@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"log"
 	"net/http"
 	"strings"
@@ -55,7 +56,7 @@ func (handler *UpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	log.Println(handler.DB)
 }
 
-func (s *APIServer) Start() error {
+func (s *APIServer) Start(ctx context.Context) error {
 	updater := NewUpdateHandler()
 	http.Handle("/update/", updater)
 	return http.ListenAndServe(s.config.BindAddr, nil)

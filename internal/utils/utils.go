@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"log"
 	"math/rand"
 	"reflect"
 	"runtime"
@@ -43,4 +44,5 @@ func (m *Metrics) Poll() {
 	seed := rand.NewSource(time.Now().UnixNano())
 	r := rand.New(seed)
 	m.Gauges["RandomValue"] = Gauge(r.Float64())
+	log.Println("Poll metrics")
 }

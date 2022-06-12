@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"flag"
 	"log"
@@ -25,8 +26,8 @@ func main() {
 		log.Fatal(err)
 	}
 	json.Unmarshal(data, config)
-
+	ctx := context.TODO()
 	server := server.New(config)
-	log.Fatal(server.Start())
+	log.Fatal(server.Start(ctx))
 
 }
