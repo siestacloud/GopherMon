@@ -24,7 +24,7 @@ func TestAPIAgent_SendMetric(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := tt.c.SendMetric(tt.args.name, &tt.args.m); (err != nil) != tt.wantErr {
+			if err := tt.c.sendMetric(tt.args.name, &tt.args.m); (err != nil) != tt.wantErr {
 				t.Errorf("APIAgent.SendMetric() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})

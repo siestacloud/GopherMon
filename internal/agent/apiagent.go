@@ -23,14 +23,14 @@ func New(config *Config) *APIAgent {
 func (c *APIAgent) Report(ms *utils.Metrics) error {
 	for name, v := range ms.Counters {
 		metric := reflect.ValueOf(v)
-		err := c.SendMetric(name, &metric)
+		err := c.sendMetric(name, &metric)
 		if err != nil {
 			return err
 		}
 	}
 	for name, v := range ms.Gauges {
 		metric := reflect.ValueOf(v)
-		err := c.SendMetric(name, &metric)
+		err := c.sendMetric(name, &metric)
 		if err != nil {
 			return err
 		}
@@ -39,7 +39,7 @@ func (c *APIAgent) Report(ms *utils.Metrics) error {
 	return nil
 }
 
-func (c *APIAgent) SendMetric(name string, m *reflect.Value) error {
+func (c *APIAgent) sendMetric(name string, m *reflect.Value) error {
 	var url string
 	url = fmt.Sprintf("http://%s/update/%s/%s/", c.config.ReportAddr, m.Type().Name(), name)
 	switch m.Kind() {
@@ -59,12 +59,10 @@ func (c *APIAgent) SendMetric(name string, m *reflect.Value) error {
 	r.Header.Add("Content-Type", "text/plain")
 	log.Printf("Send metric: %s", url)
 	resp, err := c.client.Do(r)
-
 	if err != nil {
 		return err
 	}
 	defer resp.Body.Close()
-
 	return nil
 }
 
