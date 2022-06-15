@@ -3,13 +3,15 @@ package config
 import "time"
 
 //Config Server configuration struct
-type ServerConfig struct {
+type Cfg struct {
 	Server `mapstructure:"server"`
 }
 
 type Server struct {
-	LogLevel      string        `mapstructure:"log_level"`
-	LogFile       string        `mapstructure:"log_file"`
+	Logrus struct {
+		LogLevel string `env:"LOGSLEVEL" mapstructure:"level"`
+		Json     string `env:"JSONLOGS" mapstructure:"json"`
+	}
 	Address       string        `env:"ADDRESS" mapstructure:"address"`
 	Restore       bool          `env:"RESTORE" mapstructure:"restore"`
 	StoreInterval time.Duration `env:"STORE_INTERVAL" mapstructure:"storeinterval"`

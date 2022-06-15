@@ -8,17 +8,11 @@ import (
 	"github.com/spf13/viper"
 )
 
-// CLI ..
-type CLI struct {
-	ConfigPath string `help:"Config path" type:"path" default:"config.yaml"`
-}
-
 //
-func Parse(c *CLI, cfg *ServerConfig) error {
+func Parse(cfg *Cfg) error {
 	viper.AutomaticEnv()
-	viper.SetConfigFile(c.ConfigPath)
-	viper.SetConfigType("yaml")                  // REQUIRED if the config file does not have the extension in the name
-	viper.AddConfigPath("$HOME/.apiserver.yaml") // call multiple times to add many search paths
+	viper.SetConfigType("yaml")            // REQUIRED if the config file does not have the extension in the name
+	viper.AddConfigPath("$HOME/.mon.yaml") // call multiple times to add many search paths
 	viper.AddConfigPath("./configs/")
 	viper.AddConfigPath(".")    // optionally look for config in the working directory
 	err := viper.ReadInConfig() // Find and read the config file
@@ -29,7 +23,7 @@ func Parse(c *CLI, cfg *ServerConfig) error {
 		log.Fatal(err)
 	}
 
-	flag.DurationVar(&cfg.StoreInterval, "i", 300000000000, "Duration time of saving. Possible values: int")
+	flag.DurationVar(&cfg.StoreInterval, "i", 300000000000, "Duration time of saving. Possible values: 20s 3s")
 	flag.StringVar(&cfg.StoreFile, "f", "/tmp/devops-metrics-db.json", "Path to store file. Possible values: /path/to/file")
 	flag.StringVar(&cfg.Address, "a", "localhost:8080", "Address for server. Possible values: localhost:8080")
 	flag.BoolVar(&cfg.Restore, "r", true, "Restore metrics pool. Possible values: true false")

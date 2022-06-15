@@ -17,7 +17,7 @@ import (
 
 	"github.com/caarlos0/env/v6"
 	"github.com/go-resty/resty/v2"
-	"github.com/siestacloud/service-monitoring/internal/mtrx"
+	"github.com/siestacloud/service-monitoring/internal/core"
 	"github.com/sirupsen/logrus"
 )
 
@@ -38,7 +38,7 @@ type (
 
 var (
 	cms runtime.MemStats
-	mp  *mtrx.MetricsPool
+	mp  *core.MetricsPool
 	err error
 	cfg = Config{}
 )
@@ -169,11 +169,11 @@ func url() {
 }
 
 //Формирую метрики по заданию, заполняю общий пул метрик
-func mtrxMotion(c int64, cms *runtime.MemStats) (*mtrx.MetricsPool, error) {
-	mtrxPool := mtrx.NewMetricsPool()
+func mtrxMotion(c int64, cms *runtime.MemStats) (*core.MetricsPool, error) {
+	mtrxPool := core.NewMetricsPool()
 
 	//Создаю метрику PollCount
-	pollCount := mtrx.NewMetric()
+	pollCount := core.NewMetric()
 	if err := pollCount.SetID("PollCount"); err != nil {
 		return nil, err
 	}
@@ -183,13 +183,13 @@ func mtrxMotion(c int64, cms *runtime.MemStats) (*mtrx.MetricsPool, error) {
 	if err := pollCount.SetValue(c); err != nil {
 		return nil, err
 	}
-	if !mtrxPool.Add(pollCount.ID, *pollCount) {
+	if err := mtrxPool.Create(pollCount.ID, *pollCount); err != nil {
 		return nil, errors.New("unable add PollCount mtrx into MetricsPool: " + pollCount.GetID() + pollCount.GetType())
 	}
 	//Создаю метрику RandomValue
 	rand.Seed(time.Now().UTC().UnixNano())
 
-	randomValue := mtrx.NewMetric()
+	randomValue := core.NewMetric()
 	if err := randomValue.SetID("RandomValue"); err != nil {
 		return nil, err
 	}
@@ -200,7 +200,7 @@ func mtrxMotion(c int64, cms *runtime.MemStats) (*mtrx.MetricsPool, error) {
 		return nil, err
 	}
 
-	if !mtrxPool.Add(randomValue.ID, *randomValue) {
+	if err := mtrxPool.Create(randomValue.ID, *randomValue); err != nil {
 		return nil, errors.New("unable add PollCount mtrx into MetricsPool: " + randomValue.GetID() + randomValue.GetType())
 	}
 
@@ -212,7 +212,7 @@ func mtrxMotion(c int64, cms *runtime.MemStats) (*mtrx.MetricsPool, error) {
 		id := val.Type().Field(i).Name                             //достаю имя поля
 		v := fmt.Sprint(val.FieldByName(val.Type().Field(i).Name)) // значение в этом поле
 
-		m := mtrx.NewMetric()               // создаю свою метрику
+		m := core.NewMetric()               // создаю свою метрику
 		if err := m.SetID(id); err != nil { // у обьекта метрики определены методы, через которые заполняются поля имя метрики значение и тип
 			return nil, err
 		}
@@ -222,7 +222,7 @@ func mtrxMotion(c int64, cms *runtime.MemStats) (*mtrx.MetricsPool, error) {
 		if err := m.SetValue(v); err != nil {
 			continue
 		}
-		if !mtrxPool.Add(m.ID, *m) { // Метрика добавляется в общий пул (мапку)
+		if err := mtrxPool.Create(m.ID, *m); err != nil { // Метрика добавляется в общий пул (мапку)
 			return nil, errors.New("unable add runtime mtrx into MetricsPool: " + m.GetID() + "  " + m.GetType())
 		}
 	}

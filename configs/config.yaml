@@ -1,7 +1,10 @@
 server:
-  log_level: info
+  address: "localhost:9999"
+  logrus: 
+    json: false
+    level: info
   timeout:
-      server: 10s
-      read: 15s
-      write: 10s
-      idle: 5s
+    server: 10s
+    read: 15s
+    write: 10s
+    idle: 5s

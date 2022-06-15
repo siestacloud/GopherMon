@@ -1,4 +1,4 @@
-package mtrx
+package core
 
 import (
 	"encoding/json"
