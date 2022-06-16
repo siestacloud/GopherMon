@@ -19,8 +19,8 @@ func newRAMStorage(mp *core.MetricsPool) *RAMStorage {
 	}
 }
 
-func (l *RAMStorage) LookUP(key string) *core.Metric {
-	return l.db.LookUP(key)
+func (r *RAMStorage) LookUP(key string) *core.Metric {
+	return r.db.LookUP(key)
 }
 
 func (r *RAMStorage) Update(key string, mtrx *core.Metric) error {

@@ -8,7 +8,6 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo/v4"
-	"github.com/labstack/gommon/log"
 	"github.com/sirupsen/logrus"
 
 	"github.com/siestacloud/service-monitoring/internal/core"
@@ -32,7 +31,7 @@ func NewHandler(cfg config.Cfg, services *service.Service) *Handler {
 func (h *Handler) UpdateParam() echo.HandlerFunc {
 
 	return func(c echo.Context) error {
-		logrus.Infoln("New request on: ", c.Request().URL.String())
+		infoPrint("in tune", "request: "+h.cfg.Address+c.Request().URL.String())
 		defer c.Request().Body.Close()
 		//Получение параметров с url
 		t := c.Param("type")
@@ -42,22 +41,17 @@ func (h *Handler) UpdateParam() echo.HandlerFunc {
 		//Формирую новую метрику из полученного запроса
 		mtrx := core.NewMetric()
 		if err := mtrx.SetID(n); err != nil {
-			logrus.Error(err)
-			return c.HTML(http.StatusNotImplemented, "")
+			return errResponse(c, http.StatusNotImplemented, "invalid mtrx name: "+err.Error())
 		}
 		if err := mtrx.SetType(t); err != nil {
-			log.Error(err)
-			return c.HTML(http.StatusNotImplemented, "")
+			return errResponse(c, http.StatusNotImplemented, "invalid mtrx type: "+err.Error())
 		}
 		if err := mtrx.SetValue(v); err != nil {
-			logrus.Error("incorrect value in request", err)
-			return c.HTML(http.StatusBadRequest, "")
+			return errResponse(c, http.StatusBadRequest, "invalid mtrx type: "+err.Error())
 		}
-		logrus.Info("New mtrx: ", mtrx)
 		err := h.services.Add(n, mtrx)
 		if err != nil {
-			logrus.Error(err)
-			return c.HTML(http.StatusBadRequest, "")
+			return errResponse(c, http.StatusBadRequest, "invalid mtrx type: "+err.Error())
 		}
 
 		if h.cfg.StoreFile != "" { //Если не указан путь до файла метрика не сохранится на диск
@@ -67,7 +61,8 @@ func (h *Handler) UpdateParam() echo.HandlerFunc {
 				}
 			}
 		}
-		return c.HTML(http.StatusOK, "")
+		infoPrint("send client Ok", "request: "+h.cfg.Address+c.Request().URL.String())
+		return c.JSON(http.StatusOK, statusResponse{"ok"})
 	}
 }
 

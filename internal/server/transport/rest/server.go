@@ -38,6 +38,7 @@ func (s *Server) Start() error {
 	if err := s.cfgLogRus(); err != nil {
 		return err
 	}
+	logrus.Info(s.c)
 	// var err error
 	// Set up a channel to listen to for interrupt signals.
 	var runChan = make(chan os.Signal, 1)

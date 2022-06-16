@@ -90,7 +90,7 @@ func (m *MetricsPool) Delete(key string) bool {
 //Показать все метрики
 func (m *MetricsPool) PrintAll() {
 	for k, d := range m.M {
-		fmt.Printf("\n\nkey: %s value %v  \n", k, d) // вывести  все
+		fmt.Printf("\n\nkey: %s value: %v  \n", k, d) // вывести  все
 	}
 }
 
