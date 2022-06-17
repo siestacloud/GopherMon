@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
@@ -37,13 +38,13 @@ type (
 )
 
 var (
+	cfg = Config{}
 	cms runtime.MemStats
 	mp  *core.MetricsPool
 	err error
-	cfg = Config{}
 )
 
-func main() {
+func init() {
 	flag.StringVar(&cfg.Address, "a", "localhost:8080", "Address for server. Possible values: localhost:8080")
 	flag.DurationVar(&cfg.PollInterval, "p", 2000000000, "Poll interval. Possible values: 1s 12s 1m")
 	flag.DurationVar(&cfg.ReportInterval, "r", 10000000000, "Report interval. Possible values: 1s 12s 1m")
@@ -54,16 +55,16 @@ func main() {
 		log.Fatal(err)
 	}
 
+	cfgjson, _ := json.MarshalIndent(cfg, "  ", " ")
+	logrus.Info(string(cfgjson))
+}
+func main() {
+
 	ctx, cansel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT)
-	fmt.Println(cfg)
 	defer cansel()
 
-	//Задаем интервал сбора метрик
-	pollInterval := cfg.PollInterval
-	reportInterval := cfg.ReportInterval
-
-	go takeMetrics(ctx, pollInterval)
-	go postMetrics(ctx, reportInterval)
+	go takeMetrics(ctx, cfg.PollInterval)
+	go postMetrics(ctx, cfg.ReportInterval)
 
 	<-ctx.Done()
 	time.Sleep(time.Second)

@@ -43,8 +43,8 @@ func (r *RAMStorage) GetAlljson() ([]byte, error) {
 	return js, nil
 }
 
-func (l *RAMStorage) WriteLocalStorage(fn string) error {
-	file, err := json.MarshalIndent(l.db, "", " ")
+func (r *RAMStorage) WriteLocalStorage(fn string) error {
+	file, err := json.MarshalIndent(r.db, "", " ")
 	if err != nil {
 		return err
 	}
@@ -55,7 +55,7 @@ func (l *RAMStorage) WriteLocalStorage(fn string) error {
 	return nil
 }
 
-func (l *RAMStorage) ReadLocalStorage(fn string) (*core.MetricsPool, error) {
+func (r *RAMStorage) ReadLocalStorage(fn string) (*core.MetricsPool, error) {
 	file, err := os.OpenFile(fn, os.O_RDONLY|os.O_CREATE, 0644) // открыть файл в режиме чтения если файла не существует, создать новый — флаг O_CREATE;
 	if err != nil {
 		return nil, err

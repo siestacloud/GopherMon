@@ -2,6 +2,7 @@ package rest
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"os"
 	"os/signal"
@@ -38,7 +39,8 @@ func (s *Server) Start() error {
 	if err := s.cfgLogRus(); err != nil {
 		return err
 	}
-	logrus.Info(s.c)
+	cfgjson, _ := json.MarshalIndent(s.c, "  ", " ")
+	logrus.Info(string(cfgjson))
 	// var err error
 	// Set up a channel to listen to for interrupt signals.
 	var runChan = make(chan os.Signal, 1)
