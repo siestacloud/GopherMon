@@ -16,11 +16,11 @@ import (
 )
 
 type Handler struct {
-	cfg      config.Cfg
+	cfg      *config.Cfg
 	services *service.Service
 }
 
-func NewHandler(cfg config.Cfg, services *service.Service) *Handler {
+func NewHandler(cfg *config.Cfg, services *service.Service) *Handler {
 	return &Handler{
 		cfg:      cfg,
 		services: services,

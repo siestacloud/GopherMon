@@ -1,8 +1,11 @@
 server:
-  address: "localhost:9999"
   logrus: 
     json: false
     level: info
+  address: "localhost:9999"
+  restore: true
+  storeinterval: 15s
+  storefile: devops-metrics-db.json
   timeout:
     server: 10s
     read: 15s

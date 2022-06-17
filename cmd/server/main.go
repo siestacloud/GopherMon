@@ -28,7 +28,7 @@ func main() {
 	mp := core.NewMetricsPool()
 	repos := repository.NewRepository(mp)
 	services := service.NewService(repos)
-	handlers := handler.NewHandler(cfg, services)
+	handlers := handler.NewHandler(&cfg, services)
 	s, err := rest.NewServer(&cfg, handlers)
 	if err != nil {
 		log.Fatal(err)

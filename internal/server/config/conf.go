@@ -9,11 +9,11 @@ type Cfg struct {
 
 type Server struct {
 	Logrus struct {
-		LogLevel string `env:"LOGSLEVEL" mapstructure:"level"`
-		Json     string `env:"JSONLOGS" mapstructure:"json"`
+		LogLevel string `env:"LOGSLEVEL" mapstructure:"level"` // info,debug
+		Json     string `env:"JSONLOGS" mapstructure:"json"`   // log format in json
 	}
-	Address       string        `env:"ADDRESS" mapstructure:"address"`
-	Restore       bool          `env:"RESTORE" mapstructure:"restore"`
+	Address       string        `env:"ADDRESS" mapstructure:"address"` // address+port for server
+	Restore       bool          `env:"RESTORE" mapstructure:"restore"` //
 	StoreInterval time.Duration `env:"STORE_INTERVAL" mapstructure:"storeinterval"`
 	StoreFile     string        `env:"STORE_FILE" mapstructure:"storefile"`
 	Timeout       struct {
