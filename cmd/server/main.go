@@ -49,17 +49,19 @@ func main() {
 	}
 
 	if err = s.Start(); err != nil {
-		if cfg.StoreFile != "" {
-			file, err := json.MarshalIndent(mp, "", " ")
-			if err != nil {
-				log.Fatal(err)
-			}
-			err = ioutil.WriteFile(cfg.StoreFile, file, 0644)
-			if err != nil {
-				log.Fatal(err)
-			}
+		logrus.Errorf("Server was unable to gracefully shutdown due to err: %+v", err)
+		os.Exit(1)
+	}
+
+	if cfg.StoreFile != "" {
+		file, err := json.MarshalIndent(mp, "", " ")
+		if err != nil {
+			log.Fatal(err)
 		}
-		os.Exit(0)
+		err = ioutil.WriteFile(cfg.StoreFile, file, 0644)
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 	os.Exit(0)
 }

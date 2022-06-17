@@ -50,7 +50,7 @@ func (s *Server) Start() error {
 
 	ctx, cancel := context.WithTimeout(
 		context.Background(),
-		10*time.Second,
+		100*time.Second,
 	)
 	defer cancel()
 
@@ -75,7 +75,6 @@ func (s *Server) Start() error {
 	logrus.Infof("Server is shutting down due to %+v\n", interrupt)
 
 	if err := server.Shutdown(ctx); err != nil {
-		logrus.Errorf("Server was unable to gracefully shutdown due to err: %+v", err)
 		return err
 	}
 	logrus.Info("Server was gracefully shutdown")
