@@ -10,7 +10,7 @@ type Cfg struct {
 type Server struct {
 	Logrus struct {
 		LogLevel string `env:"LOGSLEVEL" mapstructure:"level"` // info,debug
-		Json     string `env:"JSONLOGS" mapstructure:"json"`   // log format in json
+		JSON     string `env:"JSONLOGS" mapstructure:"json"`   // log format in json
 	}
 	Address       string        `env:"ADDRESS" mapstructure:"address"` // address+port for server
 	Restore       bool          `env:"RESTORE" mapstructure:"restore"` //
