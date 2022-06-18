@@ -68,7 +68,7 @@ func (r *RAMService) Add(key string, mtrx *core.Metric) error {
 	// }
 
 	// return c.HTML(http.StatusBadRequest, "")
-	r.repo.PrintMtrxs()
+	// r.repo.PrintMtrxs()
 	return nil
 }
 

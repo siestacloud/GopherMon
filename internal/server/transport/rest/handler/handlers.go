@@ -164,33 +164,34 @@ func (h *Handler) ShowMetricJSON() echo.HandlerFunc {
 
 	return func(c echo.Context) error {
 		c.Response().Header().Add("Content-Type", "application/json")
-		logrus.Info("New request on: ", c.Request().URL.String())
+		infoPrint("in tune", "request: "+h.cfg.Address+c.Request().URL.String())
 		defer c.Request().Body.Close()
 
 		// message, _ := bytes.ReadAll(c.Request().Body)
 		// s.l.Info(string(message))
+		body, err := io.ReadAll(c.Request().Body)
+		if err != nil {
+			return errResponse(c, http.StatusInternalServerError, "unable read data from body request: "+err.Error())
+		}
+		infoPrint("in tune", "	mtrx in request: "+string(body))
 
 		mtrx := core.NewMetric() // Промежуточный обьект, поля которого будут проверены
 		if err := json.NewDecoder(c.Request().Body).Decode(&mtrx); err != nil {
-			logrus.Error(err)
-			return c.HTML(http.StatusNotFound, "")
+			return errResponse(c, http.StatusNotFound, "unable decode mtrx"+err.Error())
 		}
-		logrus.Info(" /value/  from request: ", mtrx)
 
 		//Произвожу поиск метрики в базе
 		sMtrx := h.services.LookUP(mtrx.GetID())
 		if sMtrx == nil {
-			logrus.Error("metric not found")
-			return c.HTML(http.StatusNotFound, "")
+			return errResponse(c, http.StatusNotFound, "unable find mtrx in db"+err.Error())
 		}
 
 		var buf bytes.Buffer
-		err := sMtrx.MarshalMetricsinJSON(&buf)
+		err = sMtrx.MarshalMetricsinJSON(&buf)
 		if err != nil {
-			logrus.Error("message Unable marshal metric", err)
-			return c.HTML(http.StatusOK, "")
+			return errResponse(c, http.StatusInternalServerError, "unable convert mtrx to json format before send"+err.Error())
 		}
-		logrus.Info("/value/ response will send: ", buf.String())
+		infoPrint("200", "request: "+h.cfg.Address+c.Request().URL.String()+" response will send: "+buf.String())
 		return c.String(http.StatusOK, buf.String())
 	}
 }
