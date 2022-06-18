@@ -1,5 +1,5 @@
 {
     "report_addr":"127.0.0.1:8080",
-    "poll_interval": 1,
-    "report_interval":2
+    "poll_interval": 2,
+    "report_interval":10
 }
