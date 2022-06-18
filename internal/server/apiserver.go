@@ -2,9 +2,11 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
-	"strings"
+
+	"github.com/labstack/echo/v4"
 )
 
 type APIServer struct {
@@ -25,39 +27,54 @@ func NewUpdateHandler() *UpdateHandler {
 	return updater
 }
 
-func (handler *UpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "Invalid method", http.StatusMethodNotAllowed)
-		return
+func (handler *UpdateHandler) getAllMetrics(c echo.Context) error {
+	var html string
+	metrics := handler.DB.GetAll()
+	for k, v := range metrics {
+		html += fmt.Sprintf("%s: %s\n", k, v)
 	}
-	API := strings.Split(strings.Trim(r.URL.Path, "/"), "/")
-	if API[0] != "update" {
-		log.Println("Bad Request", r.URL.Path, API)
-		http.Error(w, "Bad Request", http.StatusBadRequest)
-		return
+	return c.HTML(http.StatusOK, html)
+}
+
+func (handler *UpdateHandler) getMetric(c echo.Context) error {
+	t := c.Param("type")
+	name := c.Param("name")
+	val, err := handler.DB.Get(t, name)
+	if err != nil {
+		return err
 	}
-	if len(API) < 4 {
-		w.WriteHeader(http.StatusNotFound)
-		return
+	resp := c.Response()
+	resp.Header().Set("Content-Type", "text/plain")
+	if err != nil {
+		return err
 	}
-	err := handler.DB.Set(API[1], API[2], API[3])
+
+	return c.HTML(http.StatusOK, val.String())
+}
+func (handler *UpdateHandler) postMetric(c echo.Context) error {
+
+	t := c.Param("type")
+	name := c.Param("name")
+	val := c.Param("value")
+	err := handler.DB.Set(t, name, val)
 	switch {
 	case err == nil:
+		log.Println(handler.DB)
+		return nil
 	case err.Error() == "invalid type":
-		log.Println("Bad Request", r.URL.Path, API)
-		http.Error(w, err.Error(), http.StatusNotImplemented)
-		return
-
+		return echo.NewHTTPError(http.StatusNotImplemented, err.Error())
 	default:
-		log.Println("Bad Request", r.URL.Path, API)
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+
 	}
-	log.Println(handler.DB)
+
 }
 
 func (s *APIServer) Start(ctx context.Context) error {
 	updater := NewUpdateHandler()
-	http.Handle("/update/", updater)
-	return http.ListenAndServe(s.config.BindAddr, nil)
+	e := echo.New()
+	e.GET("/", updater.getAllMetrics)
+	e.GET("/value/:type/:name", updater.getMetric)
+	e.POST("/update/:type/:name/:value", updater.postMetric)
+	return e.Start(s.config.BindAddr)
 }

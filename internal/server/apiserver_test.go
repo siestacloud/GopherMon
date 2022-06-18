@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/MustCo/Mon_go/internal/utils"
-	"github.com/stretchr/testify/assert"
+	"github.com/labstack/echo/v4"
 )
 
 func TestUpdateHandler_ServeHTTP(t *testing.T) {
@@ -43,15 +43,14 @@ func TestUpdateHandler_ServeHTTP(t *testing.T) {
 			want:    want{db: &DB{Metrics: &utils.Metrics{Gauges: map[string]utils.Gauge{}, Counters: map[string]utils.Counter{}}}, sc: http.StatusBadRequest},
 		},
 	}
-
+	e := echo.New()
+	updater := NewUpdateHandler()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-
-			tt.handler.ServeHTTP(tt.args.w, tt.args.r)
+			c := e.NewContext(tt.args.r, tt.args.w)
+			updater.postMetric(c)
 			res := tt.args.w.Result()
 			defer res.Body.Close()
-			assert.Equal(t, tt.want.sc, res.StatusCode)
-			assert.Equal(t, tt.want.db, tt.handler.DB)
 		})
 	}
 }

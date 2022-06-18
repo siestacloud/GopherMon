@@ -12,7 +12,8 @@ import (
 
 type Storage interface {
 	Init()
-	Get(t, name string) (utils.Gauge, error)
+	Get(t, name string) (fmt.Stringer, error)
+	GetAll() map[string]string
 	Set(t, name, value string) error
 }
 
@@ -57,14 +58,26 @@ func (db *DB) Set(t, name, val string) error {
 	}
 }
 
-func (db *DB) Get(t, name string) (utils.Gauge, error) {
+func (db *DB) Get(t, name string) (fmt.Stringer, error) {
 	switch strings.ToLower(t) {
 	case "gauge":
 		return db.Metrics.Gauges[name], nil
 	case "counter":
-		return utils.Gauge(db.Metrics.Counters[name]), nil
+		return db.Metrics.Counters[name], nil
 	}
-	return 0, errors.New("invalid type")
+	return nil, errors.New("invalid type")
+}
+
+func (db *DB) GetAll() map[string]string {
+	metrics := make(map[string]string, len(db.Metrics.Counters)+len(db.Metrics.Gauges))
+	for k, v := range db.Metrics.Counters {
+		metrics[k] = v.String()
+	}
+	for k, v := range db.Metrics.Gauges {
+		metrics[k] = v.String()
+	}
+	return metrics
+
 }
 
 func (db *DB) String() string {

@@ -2,6 +2,7 @@ package server
 
 import (
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/MustCo/Mon_go/internal/utils"
@@ -79,7 +80,7 @@ func TestDB_Get(t *testing.T) {
 		name string
 	}
 	type want struct {
-		res utils.Gauge
+		res fmt.Stringer
 		err error
 	}
 	tests := []struct {
@@ -92,7 +93,7 @@ func TestDB_Get(t *testing.T) {
 			name: "TestGauge",
 			db:   &DB{Metrics: &utils.Metrics{Gauges: map[string]utils.Gauge{"TestGauge": 123, "Mymetric": 14.563}, Counters: map[string]utils.Counter{"TestCounter": 1234, "Mymetric": 14563}}},
 			args: args{t: "Gauge", name: "Mymetric"},
-			want: want{res: 14.563,
+			want: want{res: utils.Gauge(14.563),
 				err: nil,
 			},
 		},
@@ -100,7 +101,7 @@ func TestDB_Get(t *testing.T) {
 			name: "TestInvalidGauge",
 			db:   &DB{Metrics: &utils.Metrics{Gauges: map[string]utils.Gauge{"TestGauge": 123, "Mymetric": 14.563}, Counters: map[string]utils.Counter{"TestCounter": 1234, "Mymetric": 14563}}},
 			args: args{t: "gauge", name: "Unknown"},
-			want: want{res: 0,
+			want: want{res: utils.Gauge(0),
 				err: nil,
 			},
 		},
@@ -108,7 +109,7 @@ func TestDB_Get(t *testing.T) {
 			name: "TestCounter",
 			db:   &DB{Metrics: &utils.Metrics{Gauges: map[string]utils.Gauge{"TestGauge": 123, "Mymetric": 14.563}, Counters: map[string]utils.Counter{"TestCounter": 1234, "Mymetric": 14563}}},
 			args: args{t: "Counter", name: "Mymetric"},
-			want: want{res: 14563,
+			want: want{res: utils.Counter(14563),
 				err: nil,
 			},
 		},
@@ -116,7 +117,7 @@ func TestDB_Get(t *testing.T) {
 			name: "TestInvalidCounter",
 			db:   &DB{Metrics: &utils.Metrics{Gauges: map[string]utils.Gauge{"TestGauge": 123, "Mymetric": 14.563}, Counters: map[string]utils.Counter{"TestCounter": 1234, "Mymetric": 14563}}},
 			args: args{t: "counter", name: "Unknown"},
-			want: want{res: 0,
+			want: want{res: utils.Counter(0),
 				err: nil,
 			},
 		},
@@ -124,7 +125,7 @@ func TestDB_Get(t *testing.T) {
 			name: "TestInvalidType",
 			db:   &DB{Metrics: &utils.Metrics{Gauges: map[string]utils.Gauge{"TestGauge": 123, "Mymetric": 14.563}, Counters: map[string]utils.Counter{"TestCounter": 1234, "Mymetric": 14563}}},
 			args: args{t: "untype", name: "Mymetric"},
-			want: want{res: 0,
+			want: want{res: nil,
 				err: errors.New("invalid type"),
 			},
 		}}
