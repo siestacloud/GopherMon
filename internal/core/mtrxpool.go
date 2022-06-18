@@ -120,22 +120,22 @@ func (m *MetricsPool) WLS(fn string) error {
 }
 
 // RLS Read Local Storage
-func (m *MetricsPool) RLS(fn string) (*MetricsPool, error) {
+func (m *MetricsPool) RLS(fn string) error {
 	file, err := os.OpenFile(fn, os.O_RDONLY|os.O_CREATE, 0644) // открыть файл в режиме чтения если файла не существует, создать новый — флаг O_CREATE;
 	if err != nil {
-		return nil, err
+		return err
 	}
 	file.Close()
 	localMp, err := ioutil.ReadFile(fn)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	mp := NewMetricsPool()
-	err = json.Unmarshal(localMp, mp)
+	// mp := NewMetricsPool()
+	err = json.Unmarshal(localMp, m)
 	if err != nil {
-		return mp, nil
+		return nil
 	}
-	return mp, nil
+	return nil
 }
 
 func infoPrint(status, message string) {

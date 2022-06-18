@@ -36,6 +36,10 @@ func main() {
 
 	if cfg.StoreFile != "" {
 		if cfg.StoreInterval != 0 {
+			if err := mp.RLS(cfg.StoreFile); err != nil {
+				log.Fatal(err)
+			}
+
 			go func() {
 				for {
 					time.Sleep(cfg.StoreInterval)
