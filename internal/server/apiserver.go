@@ -45,9 +45,6 @@ func (handler *UpdateHandler) getMetric(c echo.Context) error {
 	}
 	resp := c.Response()
 	resp.Header().Set("Content-Type", "text/plain")
-	if err != nil {
-		return err
-	}
 
 	return c.HTML(http.StatusOK, val.String())
 }
