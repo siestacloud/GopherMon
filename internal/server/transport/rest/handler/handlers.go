@@ -175,11 +175,14 @@ func (h *Handler) ShowMetricJSON() echo.HandlerFunc {
 			return errResponse(c, http.StatusNotFound, "unable decode mtrx"+err.Error())
 		}
 
+		infoPrint("in tune", fmt.Sprintf("	mtrx in request: %+v", mtrx))
+
 		//Произвожу поиск метрики в базе
 		sMtrx := h.services.LookUP(mtrx.GetID())
 		if sMtrx == nil {
 			return errResponse(c, http.StatusNotFound, "unable find mtrx in db")
 		}
+		infoPrint("in tune", fmt.Sprintf("	mtrx in db: %+v", mtrx))
 
 		var buf bytes.Buffer
 		err := sMtrx.MarshalMetricsinJSON(&buf)
