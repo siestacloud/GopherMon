@@ -169,11 +169,6 @@ func (h *Handler) ShowMetricJSON() echo.HandlerFunc {
 
 		// message, _ := bytes.ReadAll(c.Request().Body)
 		// s.l.Info(string(message))
-		body, err := io.ReadAll(c.Request().Body)
-		if err != nil {
-			return errResponse(c, http.StatusInternalServerError, "unable read data from body request: "+err.Error())
-		}
-		infoPrint("in tune", "	mtrx in request: "+string(body))
 
 		mtrx := core.NewMetric() // Промежуточный обьект, поля которого будут проверены
 		if err := json.NewDecoder(c.Request().Body).Decode(&mtrx); err != nil {
@@ -183,11 +178,11 @@ func (h *Handler) ShowMetricJSON() echo.HandlerFunc {
 		//Произвожу поиск метрики в базе
 		sMtrx := h.services.LookUP(mtrx.GetID())
 		if sMtrx == nil {
-			return errResponse(c, http.StatusNotFound, "unable find mtrx in db"+err.Error())
+			return errResponse(c, http.StatusNotFound, "unable find mtrx in db")
 		}
 
 		var buf bytes.Buffer
-		err = sMtrx.MarshalMetricsinJSON(&buf)
+		err := sMtrx.MarshalMetricsinJSON(&buf)
 		if err != nil {
 			return errResponse(c, http.StatusInternalServerError, "unable convert mtrx to json format before send"+err.Error())
 		}
