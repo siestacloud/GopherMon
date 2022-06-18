@@ -2,18 +2,20 @@ package agent
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
-	"reflect"
+	"strconv"
 	"time"
 
 	"github.com/MustCo/Mon_go/internal/utils"
+	"github.com/go-resty/resty/v2"
 )
 
 type APIAgent struct {
 	config *Config
-	client http.Client
+	client *resty.Client
 }
 
 func New(config *Config) *APIAgent {
@@ -22,15 +24,13 @@ func New(config *Config) *APIAgent {
 
 func (c *APIAgent) Report(ms *utils.Metrics) error {
 	for name, v := range ms.Counters {
-		metric := reflect.ValueOf(v)
-		err := c.sendMetric(name, &metric)
+		err := c.sendMetric(name, v)
 		if err != nil {
 			return err
 		}
 	}
 	for name, v := range ms.Gauges {
-		metric := reflect.ValueOf(v)
-		err := c.sendMetric(name, &metric)
+		err := c.sendMetric(name, v)
 		if err != nil {
 			return err
 		}
@@ -39,43 +39,57 @@ func (c *APIAgent) Report(ms *utils.Metrics) error {
 	return nil
 }
 
-func (c *APIAgent) sendMetric(name string, m *reflect.Value) error {
-	var url string
-	url = fmt.Sprintf("http://%s/update/%s/%s/", c.config.ReportAddr, m.Type().Name(), name)
-	switch m.Kind() {
-	case reflect.Uint64, reflect.Uint32:
-		url += fmt.Sprintf("%d", m.Uint())
-	case reflect.Float32, reflect.Float64:
-		url += fmt.Sprintf("%e", m.Float())
-	case reflect.Int32, reflect.Int64:
-		url += fmt.Sprintf("%d", m.Int())
-	}
+func (c *APIAgent) sendMetric(name string, m interface{}) error {
 
-	r, err := http.NewRequest(http.MethodPost, url, nil)
+	var val, t string
+	switch m := m.(type) {
+	case utils.Gauge:
+		t = "gauge"
+		val = strconv.FormatFloat(float64(m), 'e', 2, 64)
+	case utils.Counter:
+		t = "counter"
+		val = strconv.FormatInt(int64(m), 10)
+	}
+	log.Printf("Send metric: %s : %v", name, val)
+	resp, err := c.client.R().
+		SetPathParams(map[string]string{
+			"host": c.config.ReportAddr,
+			"type": t,
+			"name": name,
+			"val":  val,
+		}).
+		Post("http://{host}/update/{type}/{name}/{val}")
 	if err != nil {
 		return err
 	}
-
-	r.Header.Add("Content-Type", "text/plain")
-	log.Printf("Send metric: %s", url)
-	resp, err := c.client.Do(r)
-	if err != nil {
-		return err
+	if resp.StatusCode() != http.StatusOK {
+		fmt.Println("  Status Code:", resp.StatusCode())
+		fmt.Println("  Status     :", resp.Status())
+		fmt.Println("  Proto      :", resp.Proto())
+		fmt.Println("  Time       :", resp.Time())
+		fmt.Println("  Received At:", resp.ReceivedAt())
+		fmt.Println("  Body       :\n", resp)
+		return errors.New("invalid status code")
 	}
-	defer resp.Body.Close()
 	return nil
 }
 
 func (c *APIAgent) Start(ctx context.Context) error {
 	m := new(utils.Metrics)
-	c.client = http.Client{}
+	c.client = resty.New()
+	c.client.R().
+		SetHeader("Content-Type", "text/plain")
+
 	reports := time.NewTicker(time.Duration(c.config.ReportInterval) * time.Second)
 	polls := time.NewTicker(time.Duration(c.config.PollInterval) * time.Second)
 	m.Init()
 	for {
 		select {
 		case <-reports.C:
-			c.Report(m)
+			err := c.Report(m)
+			if err != nil {
+				log.Println("Error", err)
+			}
 		case <-polls.C:
 			m.Poll()
 		case <-ctx.Done():
