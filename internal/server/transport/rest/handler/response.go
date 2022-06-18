@@ -14,10 +14,10 @@ type statusResponse struct {
 }
 
 func errResponse(c echo.Context, statusCode int, message string) error {
-	logrus.WithFields(logrus.Fields{"tag": "layer: transport"}).Info(message)
+	logrus.WithFields(logrus.Fields{"layer": "transport", "status": statusCode}).Warn(message)
 	return c.JSON(statusCode, errorResponse{message})
 }
 
 func infoPrint(status, message string) {
-	logrus.WithFields(logrus.Fields{"Layer": "transport", "Status": status}).Info(message)
+	logrus.WithFields(logrus.Fields{"layer": "transport", "status": status}).Info(message)
 }

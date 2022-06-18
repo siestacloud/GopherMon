@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+
+	"github.com/sirupsen/logrus"
 )
 
 //CustomMetrics Пул метрик
@@ -34,19 +36,19 @@ func (m *MetricsPool) LookUP(key string) *Metric {
 //Добавление новой метрики
 func (m *MetricsPool) Create(key string, mtrx Metric) error {
 	if key == "" {
-		return errors.New("Unable create mtrx: empty key")
+		return errors.New("unable create mtrx: empty key")
 	}
 	if m.LookUP(key) == nil {
 		m.M[key] = mtrx
 		return nil //доб новую метрику в мапку
 	}
-	return errors.New("Unable create mtrx: mtrx already exist")
+	return errors.New("unable create mtrx: mtrx already exist")
 }
 
 //Обновить метрику в пуле
 func (m *MetricsPool) Update(key string, mtrx Metric) error {
 	if key == "" {
-		return errors.New("Unable update mtrx: empty key")
+		return errors.New("unable update mtrx: empty key")
 	}
 	switch mtrx.GetType() { //Определяю тип новой метрики
 	// значение у нов метрики с типом счетчик не заменяет значение в базе а добавляется к нему.
@@ -90,7 +92,7 @@ func (m *MetricsPool) Delete(key string) bool {
 //Показать все метрики
 func (m *MetricsPool) PrintAll() {
 	for k, d := range m.M {
-		fmt.Printf("\n\nkey: %s value: %v  \n", k, d) // вывести  все
+		infoPrint("mtrx from db", fmt.Sprintf("		MTRX: %s VAL: %v  \n", k, d))
 	}
 }
 
@@ -134,4 +136,8 @@ func (m *MetricsPool) RLS(fn string) (*MetricsPool, error) {
 		return mp, nil
 	}
 	return mp, nil
+}
+
+func infoPrint(status, message string) {
+	logrus.WithFields(logrus.Fields{"Layer": "repository", "Status": status}).Info(message)
 }

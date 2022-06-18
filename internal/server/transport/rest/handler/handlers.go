@@ -71,26 +71,24 @@ func (h *Handler) UpdateJSON() echo.HandlerFunc {
 
 	return func(c echo.Context) error {
 		c.Response().Header().Add("Content-Type", "application/json")
-		logrus.Info("New request on: ", c.Request().URL.String())
+		infoPrint("in tune", "request: "+h.cfg.Address+c.Request().URL.String())
 		body, err := io.ReadAll(c.Request().Body)
 		if err != nil {
-			logrus.Error("check err", err)
+			return errResponse(c, http.StatusInternalServerError, "unable read data from body request: "+err.Error())
 		}
-		logrus.Info("/update/ mtrx from request", string(body))
+		infoPrint("in tune", "	mtrx in request: "+string(body))
 
 		defer c.Request().Body.Close()
 
 		mtrx := core.NewMetric()
 		if err := mtrx.UnmarshalMetricJSON(body); err != nil {
-			logrus.Error(err)
-			return c.HTML(http.StatusBadRequest, "")
+			return errResponse(c, http.StatusBadRequest, "unable read data from body request: "+err.Error())
 		}
-		logrus.Info(" /update/ new mtrx object  ", mtrx)
+		infoPrint("in tune", "	success parse in object mtrx")
 
 		err = h.services.Add(mtrx.GetID(), mtrx)
 		if err != nil {
-			logrus.Error(err)
-			return c.HTML(http.StatusBadRequest, "")
+			return errResponse(c, http.StatusBadRequest, "unable read data from body request: "+err.Error())
 		}
 
 		if h.cfg.StoreFile != "" { //Если не указан путь до файла метрика не сохранится на диск
@@ -100,8 +98,8 @@ func (h *Handler) UpdateJSON() echo.HandlerFunc {
 				}
 			}
 		}
+		infoPrint("200", "request: "+h.cfg.Address+c.Request().URL.String())
 		return c.String(http.StatusOK, string(body))
-
 	}
 }
 
@@ -109,7 +107,7 @@ func (h *Handler) UpdateJSON() echo.HandlerFunc {
 func (h *Handler) ShowMetric() echo.HandlerFunc {
 
 	return func(c echo.Context) error {
-		logrus.Info("New request on: ", c.Request().URL.String())
+		infoPrint("in tune", "request: "+h.cfg.Address+c.Request().URL.String())
 		defer c.Request().Body.Close()
 
 		t := c.Param("type")
@@ -117,36 +115,32 @@ func (h *Handler) ShowMetric() echo.HandlerFunc {
 
 		mtrx := core.NewMetric()
 		if err := mtrx.SetID(n); err != nil {
-			logrus.Error(err)
-			return c.HTML(http.StatusNotImplemented, "")
+			return errResponse(c, http.StatusNotImplemented, "invalid mtrx name: "+err.Error())
 		}
 		if err := mtrx.SetType(t); err != nil {
-			logrus.Error(err)
-			return c.HTML(http.StatusNotImplemented, "")
+			return errResponse(c, http.StatusNotImplemented, "invalid mtrx type: "+err.Error())
 		}
 		sMtrx := h.services.LookUP(mtrx.GetID())
 		if sMtrx == nil {
-			logrus.Error("metric not found")
-			return c.HTML(http.StatusNotFound, "")
+			return errResponse(c, http.StatusNotFound, "mtrx not found in db")
 		}
 		if mtrx.GetType() != sMtrx.MType {
-			logrus.Error("Metric found but type not equal")
-			return c.HTML(http.StatusNotFound, "")
+			return errResponse(c, http.StatusNotFound, "mtrx found but types not equal")
 		}
 
 		if sMtrx.GetType() == "counter" {
 			d, err := sMtrx.GetDelta()
 			if err != nil {
-				logrus.Error("mtrs from storage has empty value", err)
-				return c.HTML(http.StatusNotFound, "")
+				return errResponse(c, http.StatusNotFound, "mtrx from storage has empty value "+err.Error())
 			}
+			infoPrint("200", "request: "+h.cfg.Address+c.Request().URL.String())
 			return c.HTML(http.StatusOK, fmt.Sprintf("%v", d))
 		}
 		v, err := sMtrx.GetValue()
 		if err != nil {
-			logrus.Error(err)
-			return c.HTML(http.StatusNotFound, "")
+			return errResponse(c, http.StatusNotFound, "mtrx from storage has empty value"+err.Error())
 		}
+		infoPrint("200", "request: "+h.cfg.Address+c.Request().URL.String())
 		return c.HTML(http.StatusOK, fmt.Sprintf("%v", v))
 	}
 }
@@ -154,12 +148,13 @@ func (h *Handler) ShowMetric() echo.HandlerFunc {
 // GET /
 func (h *Handler) ShowAllMetrics() echo.HandlerFunc {
 	return func(c echo.Context) error {
-		logrus.Info("New request on: ", c.Request().URL.String())
+		infoPrint("in tune", "request: "+h.cfg.Address+c.Request().URL.String())
 		defer c.Request().Body.Close()
 		mp, err := h.services.GetAlljson()
 		if err != nil || mp == nil {
-			return c.HTML(http.StatusNotFound, "")
+			return errResponse(c, http.StatusNotFound, "mtrx from storage has empty value"+err.Error())
 		}
+		infoPrint("200", "request: "+h.cfg.Address+c.Request().URL.String())
 		return c.HTML(http.StatusOK, string(mp))
 	}
 }
