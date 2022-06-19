@@ -6,6 +6,7 @@ import (
 	"log"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/MustCo/Mon_go/internal/utils"
 )
@@ -24,6 +25,7 @@ func NewDB() *DB {
 }
 
 type DB struct {
+	mut     sync.Mutex
 	Metrics *utils.Metrics
 }
 
@@ -42,7 +44,9 @@ func (db *DB) Set(t, name, val string) error {
 			return err
 		}
 		log.Printf("Gauge %s %s = %e", name, val, g)
+		db.mut.Lock()
 		db.Metrics.Gauges[name] = utils.Gauge(g)
+		db.mut.Unlock()
 		return nil
 
 	case "counter":
@@ -51,7 +55,9 @@ func (db *DB) Set(t, name, val string) error {
 		if err != nil {
 			return err
 		}
+		db.mut.Lock()
 		db.Metrics.Counters[name] = utils.Counter(ctr)
+		db.mut.Unlock()
 		return nil
 	default:
 		return errors.New("invalid type")
@@ -59,8 +65,11 @@ func (db *DB) Set(t, name, val string) error {
 }
 
 func (db *DB) Get(t, name string) (fmt.Stringer, error) {
+	db.mut.Lock()
+	defer db.mut.Unlock()
 	switch strings.ToLower(t) {
 	case "gauge":
+
 		if val, ok := db.Metrics.Gauges[name]; ok {
 			return val, nil
 		} else {
@@ -77,7 +86,10 @@ func (db *DB) Get(t, name string) (fmt.Stringer, error) {
 }
 
 func (db *DB) GetAll() map[string]string {
+
 	metrics := make(map[string]string, len(db.Metrics.Counters)+len(db.Metrics.Gauges))
+	db.mut.Lock()
+	defer db.mut.Unlock()
 	for k, v := range db.Metrics.Counters {
 		metrics[k] = v.String()
 	}
