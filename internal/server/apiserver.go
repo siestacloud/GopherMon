@@ -41,6 +41,7 @@ func (handler *UpdateHandler) getAllMetrics(c echo.Context) error {
 func (handler *UpdateHandler) getMetric(c echo.Context) error {
 	t := c.Param("type")
 	name := c.Param("name")
+	log.Printf("Get Metric type:%s name:%s", t, name)
 	val, err := handler.DB.Get(t, name)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusNotFound, err.Error())
@@ -55,7 +56,7 @@ func (handler *UpdateHandler) postMetric(c echo.Context) error {
 	t := c.Param("type")
 	name := c.Param("name")
 	val := c.Param("value")
-	log.Printf("type:%s name:%s value:%s", t, name, val)
+	log.Printf("Post Metric type:%s name:%s value:%s", t, name, val)
 	err := handler.DB.Set(t, name, val)
 	switch {
 	case err == nil:

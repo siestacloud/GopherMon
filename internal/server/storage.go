@@ -43,7 +43,7 @@ func (db *DB) Set(t, name, val string) error {
 		if err != nil {
 			return err
 		}
-		log.Printf("Gauge %s %s = %e", name, val, g)
+		log.Printf("DB Set %s %s %s = %e", t, name, val, g)
 		db.mut.Lock()
 		db.Metrics.Gauges[name] = utils.Gauge(g)
 		db.mut.Unlock()
@@ -55,7 +55,7 @@ func (db *DB) Set(t, name, val string) error {
 		if err != nil {
 			return err
 		}
-		log.Printf("Counter %s %s = %v", name, val, ctr)
+		log.Printf("DB Set %s %s %s = %v", t, name, val, ctr)
 		db.mut.Lock()
 		db.Metrics.Counters[name] = utils.Counter(ctr)
 		db.mut.Unlock()
@@ -68,6 +68,7 @@ func (db *DB) Set(t, name, val string) error {
 func (db *DB) Get(t, name string) (fmt.Stringer, error) {
 	db.mut.Lock()
 	defer db.mut.Unlock()
+	log.Printf("DB Get %s %s", t, name)
 	switch strings.ToLower(t) {
 	case "gauge":
 
