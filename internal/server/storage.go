@@ -57,7 +57,7 @@ func (db *DB) Set(t, name, val string) error {
 		}
 		log.Printf("DB Set %s %s %s = %v", t, name, val, ctr)
 		db.mut.Lock()
-		db.Metrics.Counters[name] = utils.Counter(ctr)
+		db.Metrics.Counters[name] += utils.Counter(ctr)
 		db.mut.Unlock()
 		return nil
 	default:
