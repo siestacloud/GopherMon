@@ -3,7 +3,6 @@ package server
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
@@ -58,7 +57,6 @@ func (handler *UpdateHandler) postMetric(c echo.Context) error {
 	err := handler.DB.Set(t, name, val)
 	switch {
 	case err == nil:
-		log.Println(handler.DB)
 		return nil
 	case err.Error() == "invalid type":
 		return echo.NewHTTPError(http.StatusNotImplemented, err.Error())
