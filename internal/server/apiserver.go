@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
@@ -54,6 +55,7 @@ func (handler *UpdateHandler) postMetric(c echo.Context) error {
 	t := c.Param("type")
 	name := c.Param("name")
 	val := c.Param("value")
+	log.Printf("type:%s name:%s value:%s", t, name, val)
 	err := handler.DB.Set(t, name, val)
 	switch {
 	case err == nil:

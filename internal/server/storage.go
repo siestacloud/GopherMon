@@ -55,6 +55,7 @@ func (db *DB) Set(t, name, val string) error {
 		if err != nil {
 			return err
 		}
+		log.Printf("Counter %s %s = %v", name, val, ctr)
 		db.mut.Lock()
 		db.Metrics.Counters[name] = utils.Counter(ctr)
 		db.mut.Unlock()
@@ -86,10 +87,9 @@ func (db *DB) Get(t, name string) (fmt.Stringer, error) {
 }
 
 func (db *DB) GetAll() map[string]string {
-
-	metrics := make(map[string]string, len(db.Metrics.Counters)+len(db.Metrics.Gauges))
 	db.mut.Lock()
 	defer db.mut.Unlock()
+	metrics := make(map[string]string, len(db.Metrics.Counters)+len(db.Metrics.Gauges))
 	for k, v := range db.Metrics.Counters {
 		metrics[k] = v.String()
 	}
