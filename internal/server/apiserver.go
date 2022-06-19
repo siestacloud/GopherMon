@@ -29,10 +29,12 @@ func NewUpdateHandler() *UpdateHandler {
 
 func (handler *UpdateHandler) getAllMetrics(c echo.Context) error {
 	var html string
+	html = "<html>\n"
 	metrics := handler.DB.GetAll()
 	for k, v := range metrics {
-		html += fmt.Sprintf("%s: %s\n", k, v)
+		html += fmt.Sprintf("<p>%s: %s</p>\n", k, v)
 	}
+	html += "</html>"
 	return c.HTML(http.StatusOK, html)
 }
 
@@ -41,7 +43,7 @@ func (handler *UpdateHandler) getMetric(c echo.Context) error {
 	name := c.Param("name")
 	val, err := handler.DB.Get(t, name)
 	if err != nil {
-		return err
+		return echo.NewHTTPError(http.StatusNotFound, err.Error())
 	}
 	resp := c.Response()
 	resp.Header().Set("Content-Type", "text/plain")

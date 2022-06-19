@@ -45,7 +45,7 @@ func (c *APIAgent) sendMetric(name string, m interface{}) error {
 	switch m := m.(type) {
 	case utils.Gauge:
 		t = "gauge"
-		val = strconv.FormatFloat(float64(m), 'e', 2, 64)
+		val = strconv.FormatFloat(float64(m), 'f', 3, 64)
 	case utils.Counter:
 		t = "counter"
 		val = strconv.FormatInt(int64(m), 10)

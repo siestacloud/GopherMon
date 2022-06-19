@@ -61,9 +61,17 @@ func (db *DB) Set(t, name, val string) error {
 func (db *DB) Get(t, name string) (fmt.Stringer, error) {
 	switch strings.ToLower(t) {
 	case "gauge":
-		return db.Metrics.Gauges[name], nil
+		if val, ok := db.Metrics.Gauges[name]; ok {
+			return val, nil
+		} else {
+			return nil, errors.New("not found")
+		}
 	case "counter":
-		return db.Metrics.Counters[name], nil
+		if val, ok := db.Metrics.Counters[name]; ok {
+			return val, nil
+		} else {
+			return nil, errors.New("not found")
+		}
 	}
 	return nil, errors.New("invalid type")
 }
