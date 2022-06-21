@@ -24,33 +24,21 @@ var Counters = []string{
 	"PollCount",
 }
 
-type JsonMetrics struct {
+type Metrics struct {
 	ID    string   `json:"id"`
 	MType string   `json:"type"`
 	Delta *int64   `json:"delta,omitempty"`
 	Value *float64 `json:"value,omitempty"`
 }
+type MetricsStorage map[string]Metrics
 
-type Metrics struct {
-	Gauges   map[string]Gauge
-	Counters map[string]Counter
-	Jsons    []JsonMetrics
-}
-
-func NewMetricsStorage() *Metrics {
-	m := &Metrics{}
-	m.Init()
+func NewMetricsStorage() MetricsStorage {
+	m := MetricsStorage{}
 	return m
 }
 
-func (m *Metrics) Init() {
-	m.Gauges = map[string]Gauge{}
-	m.Counters = map[string]Counter{}
-	m.Jsons = make([]JsonMetrics, 100)
-}
-
-func (m *Metrics) Poll() {
-	m.Counters["PollCount"] += 1
+func (m MetricsStorage) Poll() {
+	*m["PollCount"].Delta += 1
 	metrics := &runtime.MemStats{}
 	runtime.ReadMemStats(metrics)
 	mtrx := reflect.ValueOf(metrics).Elem()
@@ -58,15 +46,16 @@ func (m *Metrics) Poll() {
 		f := mtrx.Field(i)
 		switch f.Kind() {
 		case reflect.Uint64, reflect.Uint32:
-			m.Gauges[mtrx.Type().Field(i).Name] = Gauge(f.Uint())
-		case reflect.Float32, reflect.Float64:
-			m.Gauges[mtrx.Type().Field(i).Name] = Gauge(f.Float())
+			*m[mtrx.Type().Field(i).Name].Delta = int64(f.Uint())
 		case reflect.Int32, reflect.Int64:
-			m.Gauges[mtrx.Type().Field(i).Name] = Gauge(f.Int())
+			*m[mtrx.Type().Field(i).Name].Delta = int64(f.Int())
+		case reflect.Float32, reflect.Float64:
+			*m[mtrx.Type().Field(i).Name].Value = float64(f.Float())
+
 		}
 	}
 	seed := rand.NewSource(time.Now().UnixNano())
 	r := rand.New(seed)
-	m.Gauges["RandomValue"] = Gauge(r.Float64())
+	*m["RandomValue"].Value = r.Float64()
 	log.Println("Poll metrics")
 }
