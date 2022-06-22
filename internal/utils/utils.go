@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"fmt"
 	"log"
 	"math/rand"
 	"reflect"
@@ -20,8 +21,9 @@ func (c Counter) String() string {
 	return strconv.FormatInt(int64(c), 10)
 }
 
-var Counters = []string{
-	"PollCount",
+var Types = map[string]bool{
+	"counter": true,
+	"gauge":   true,
 }
 
 type Metrics struct {
@@ -29,6 +31,11 @@ type Metrics struct {
 	MType string   `json:"type"`
 	Delta *int64   `json:"delta,omitempty"`
 	Value *float64 `json:"value,omitempty"`
+}
+
+func (m *Metrics) String() string {
+	s := fmt.Sprintf("ID:%s\ntype:%s\ndelta:%d\nvalue:%f\n", m.ID, m.MType, *m.Delta, *m.Value)
+	return s
 }
 
 func NewMetrics(id, mtype string) *Metrics {

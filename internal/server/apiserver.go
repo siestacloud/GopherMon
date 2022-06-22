@@ -2,7 +2,6 @@ package server
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"net/http"
 
@@ -28,14 +27,11 @@ func NewUpdateHandler() *UpdateHandler {
 }
 
 func (handler *UpdateHandler) getAllMetrics(c echo.Context) error {
-	var html string
-	html = "<html>\n"
 	metrics := handler.DB.GetAll()
-	for k, v := range metrics {
-		html += fmt.Sprintf("<p>%s: %s</p>\n", k, v)
-	}
-	html += "</html>"
-	return c.HTML(http.StatusOK, html)
+	resp := c.Response()
+	resp.Header().Set("Content-Type", "application/json")
+
+	return c.JSON(http.StatusOK, metrics)
 }
 
 func (handler *UpdateHandler) getMetric(c echo.Context) error {
@@ -47,9 +43,8 @@ func (handler *UpdateHandler) getMetric(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusNotFound, err.Error())
 	}
 	resp := c.Response()
-	resp.Header().Set("Content-Type", "text/plain")
-
-	return c.HTML(http.StatusOK, val.String())
+	resp.Header().Set("Content-Type", "application/json")
+	return c.JSON(http.StatusOK, val)
 }
 func (handler *UpdateHandler) postMetric(c echo.Context) error {
 
