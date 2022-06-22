@@ -22,40 +22,31 @@ func New(config *Config) *APIAgent {
 	return &APIAgent{config: config}
 }
 
-func (c *APIAgent) Report(ms *utils.Metrics) error {
-	for name, v := range ms.Counters {
-		err := c.sendMetric(name, v)
+func (c *APIAgent) Report(ms utils.MetricsStorage) error {
+	for _, v := range ms {
+		err := c.sendMetric(&v)
 		if err != nil {
 			return err
 		}
-	}
-	for name, v := range ms.Gauges {
-		err := c.sendMetric(name, v)
-		if err != nil {
-			return err
-		}
-
 	}
 	return nil
 }
 
-func (c *APIAgent) sendMetric(name string, m interface{}) error {
+func (c *APIAgent) sendMetric(m *utils.Metrics) error {
 
-	var val, t string
-	switch m := m.(type) {
-	case utils.Gauge:
-		t = "gauge"
-		val = strconv.FormatFloat(float64(m), 'f', 3, 64)
-	case utils.Counter:
-		t = "counter"
-		val = strconv.FormatInt(int64(m), 10)
+	var val string
+	switch m.MType {
+	case "gauge":
+		val = strconv.FormatFloat(float64(*m.Value), 'f', 3, 64)
+	case "counter":
+		val = strconv.FormatInt(int64(*m.Delta), 10)
 	}
-	log.Printf("Send metric: %s : %v", name, val)
+	log.Printf("Send metric: %v", m)
 	resp, err := c.client.R().
 		SetPathParams(map[string]string{
 			"host": c.config.ReportAddr,
-			"type": t,
-			"name": name,
+			"type": m.MType,
+			"name": m.ID,
 			"val":  val,
 		}).
 		Post("http://{host}/update/{type}/{name}/{val}")

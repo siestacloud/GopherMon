@@ -2,106 +2,65 @@ package server
 
 import (
 	"errors"
-	"fmt"
-	"log"
 	"strconv"
-	"strings"
 	"sync"
 
 	"github.com/MustCo/Mon_go/internal/utils"
 )
 
 type Storage interface {
-	Init()
-	Get(t, name string) (fmt.Stringer, error)
-	GetAll() map[string]string
-	Set(t, name, value string) error
+	Get(t, name string) (*utils.Metrics, error)
+	GetAll() map[string]utils.Metrics
+	Set(t, name, val string) error
 }
 
 func NewDB() *DB {
 	db := new(DB)
-	db.Init()
+	db.Metrics = utils.NewMetricsStorage()
 	return db
 }
 
 type DB struct {
 	mut     sync.Mutex
-	Metrics *utils.Metrics
-}
-
-func (db *DB) Init() {
-	db.Metrics = utils.NewMetricsStorage()
+	Metrics utils.MetricsStorage
 }
 
 func (db *DB) Set(t, name, val string) error {
-	switch strings.ToLower(t) {
-	case "gauge":
-
-		var g float64
-		g, err := strconv.ParseFloat(val, 64)
-		if err != nil {
-			return err
-		}
-		log.Printf("DB Set %s %s %s = %e", t, name, val, g)
-		db.mut.Lock()
-		db.Metrics.Gauges[name] = utils.Gauge(g)
-		db.mut.Unlock()
-		return nil
-
+	metrica := utils.NewMetrics(name, t)
+	switch metrica.MType {
 	case "counter":
-		var ctr int64
-		ctr, err := strconv.ParseInt(val, 10, 64)
+		d, err := strconv.ParseInt(val, 10, 64)
 		if err != nil {
 			return err
 		}
-		log.Printf("DB Set %s %s %s = %v", t, name, val, ctr)
-		db.mut.Lock()
-		db.Metrics.Counters[name] += utils.Counter(ctr)
-		db.mut.Unlock()
-		return nil
+		metrica.Delta = &d
+	case "gauge":
+		v, err := strconv.ParseFloat(val, 64)
+		if err != nil {
+			return err
+		}
+		metrica.Value = &v
 	default:
 		return errors.New("invalid type")
 	}
+	db.mut.Lock()
+	db.Metrics[metrica.ID] = *metrica
+	db.mut.Unlock()
+	return nil
+
 }
 
-func (db *DB) Get(t, name string) (fmt.Stringer, error) {
-	db.mut.Lock()
-	defer db.mut.Unlock()
-	log.Printf("DB Get %s %s", t, name)
-	switch strings.ToLower(t) {
-	case "gauge":
-
-		if val, ok := db.Metrics.Gauges[name]; ok {
-			return val, nil
-		} else {
-			return nil, errors.New("not found")
-		}
-	case "counter":
-		if val, ok := db.Metrics.Counters[name]; ok {
-			return val, nil
-		} else {
-			return nil, errors.New("not found")
+func (db *DB) Get(t, name string) (*utils.Metrics, error) {
+	if _, ok := utils.Types[t]; ok {
+		db.mut.Lock()
+		if m, ok := db.Metrics[name]; ok {
+			db.mut.Unlock()
+			return &m, nil
 		}
 	}
-	return nil, errors.New("invalid type")
+	return nil, errors.New("")
 }
 
-func (db *DB) GetAll() map[string]string {
-	db.mut.Lock()
-	defer db.mut.Unlock()
-	metrics := make(map[string]string, len(db.Metrics.Counters)+len(db.Metrics.Gauges))
-	for k, v := range db.Metrics.Counters {
-		metrics[k] = v.String()
-	}
-	for k, v := range db.Metrics.Gauges {
-		metrics[k] = v.String()
-	}
-	return metrics
-
-}
-
-func (db *DB) String() string {
-	result := fmt.Sprintf("Counters:%v\nGauges:%v\n", db.Metrics.Counters, db.Metrics.Gauges)
-	return result
-
+func (db *DB) GetAll() map[string]utils.Metrics {
+	return db.Metrics
 }

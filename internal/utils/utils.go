@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"fmt"
 	"log"
 	"math/rand"
 	"reflect"
@@ -20,53 +21,63 @@ func (c Counter) String() string {
 	return strconv.FormatInt(int64(c), 10)
 }
 
-var Counters = []string{
-	"PollCount",
+var Types = map[string]bool{
+	"counter": true,
+	"gauge":   true,
 }
 
-type JsonMetrics struct {
+type Metrics struct {
 	ID    string   `json:"id"`
 	MType string   `json:"type"`
 	Delta *int64   `json:"delta,omitempty"`
 	Value *float64 `json:"value,omitempty"`
 }
 
-type Metrics struct {
-	Gauges   map[string]Gauge
-	Counters map[string]Counter
-	Jsons    []JsonMetrics
+func (m *Metrics) String() string {
+	s := fmt.Sprintf("ID:%s\ntype:%s\ndelta:%d\nvalue:%f\n", m.ID, m.MType, *m.Delta, *m.Value)
+	return s
 }
 
-func NewMetricsStorage() *Metrics {
-	m := &Metrics{}
-	m.Init()
-	return m
+func NewMetrics(id, mtype string) *Metrics {
+	return &Metrics{
+		ID:    id,
+		MType: mtype,
+		Value: new(float64),
+		Delta: new(int64),
+	}
 }
 
-func (m *Metrics) Init() {
-	m.Gauges = map[string]Gauge{}
-	m.Counters = map[string]Counter{}
-	m.Jsons = make([]JsonMetrics, 100)
+type MetricsStorage map[string]Metrics
+
+func NewMetricsStorage() MetricsStorage {
+	m := NewMetrics("PollCount", "counter")
+	return MetricsStorage{m.ID: *m}
 }
 
-func (m *Metrics) Poll() {
-	m.Counters["PollCount"] += 1
+func (m MetricsStorage) Poll() {
+	g := "gauge"
+	*m["PollCount"].Delta += 1
 	metrics := &runtime.MemStats{}
 	runtime.ReadMemStats(metrics)
 	mtrx := reflect.ValueOf(metrics).Elem()
 	for i := 0; i < mtrx.NumField(); i++ {
 		f := mtrx.Field(i)
+		m[mtrx.Type().Field(i).Name] = *NewMetrics(mtrx.Type().Field(i).Name, g)
 		switch f.Kind() {
-		case reflect.Uint64, reflect.Uint32:
-			m.Gauges[mtrx.Type().Field(i).Name] = Gauge(f.Uint())
-		case reflect.Float32, reflect.Float64:
-			m.Gauges[mtrx.Type().Field(i).Name] = Gauge(f.Float())
 		case reflect.Int32, reflect.Int64:
-			m.Gauges[mtrx.Type().Field(i).Name] = Gauge(f.Int())
+			*m[mtrx.Type().Field(i).Name].Value = float64(f.Int())
+
+		case reflect.Uint64, reflect.Uint32:
+			*m[mtrx.Type().Field(i).Name].Value = float64(f.Uint())
+
+		case reflect.Float32, reflect.Float64:
+			*m[mtrx.Type().Field(i).Name].Value = f.Float()
 		}
+
 	}
 	seed := rand.NewSource(time.Now().UnixNano())
 	r := rand.New(seed)
-	m.Gauges["RandomValue"] = Gauge(r.Float64())
+	m["RandomValue"] = *NewMetrics("RandomValue", g)
+	*m["RandomValue"].Value = r.Float64()
 	log.Println("Poll metrics")
 }
