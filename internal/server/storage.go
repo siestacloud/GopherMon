@@ -30,8 +30,7 @@ type DB struct {
 }
 
 func (db *DB) Init() {
-	db.Metrics = new(utils.Metrics)
-	db.Metrics.Init()
+	db.Metrics = utils.NewMetricsStorage()
 }
 
 func (db *DB) Set(t, name, val string) error {

@@ -24,14 +24,29 @@ var Counters = []string{
 	"PollCount",
 }
 
+type JsonMetrics struct {
+	ID    string   `json:"id"`
+	MType string   `json:"type"`
+	Delta *int64   `json:"delta,omitempty"`
+	Value *float64 `json:"value,omitempty"`
+}
+
 type Metrics struct {
 	Gauges   map[string]Gauge
 	Counters map[string]Counter
+	Jsons    []JsonMetrics
+}
+
+func NewMetricsStorage() *Metrics {
+	m := &Metrics{}
+	m.Init()
+	return m
 }
 
 func (m *Metrics) Init() {
 	m.Gauges = map[string]Gauge{}
 	m.Counters = map[string]Counter{}
+	m.Jsons = make([]JsonMetrics, 100)
 }
 
 func (m *Metrics) Poll() {

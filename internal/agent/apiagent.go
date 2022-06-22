@@ -75,14 +75,13 @@ func (c *APIAgent) sendMetric(name string, m interface{}) error {
 }
 
 func (c *APIAgent) Start(ctx context.Context) error {
-	m := new(utils.Metrics)
+	m := utils.NewMetricsStorage()
 	c.client = resty.New()
 	c.client.R().
 		SetHeader("Content-Type", "text/plain")
 
 	reports := time.NewTicker(time.Duration(c.config.ReportInterval) * time.Second)
 	polls := time.NewTicker(time.Duration(c.config.PollInterval) * time.Second)
-	m.Init()
 	for {
 		select {
 		case <-reports.C:
