@@ -17,11 +17,12 @@ type Storage interface {
 func NewDB() *DB {
 	db := new(DB)
 	db.Metrics = utils.NewMetricsStorage()
+	db.mut = &sync.Mutex{}
 	return db
 }
 
 type DB struct {
-	mut     sync.Mutex
+	mut     *sync.Mutex
 	Metrics utils.MetricsStorage
 }
 
@@ -53,12 +54,14 @@ func (db *DB) Set(t, name, val string) error {
 func (db *DB) Get(t, name string) (*utils.Metrics, error) {
 	if _, ok := utils.Types[t]; ok {
 		db.mut.Lock()
+		defer db.mut.Unlock()
 		if m, ok := db.Metrics[name]; ok {
-			db.mut.Unlock()
+
 			return &m, nil
 		}
+		return nil, errors.New("unknown metric")
 	}
-	return nil, errors.New("")
+	return nil, errors.New("invalid type")
 }
 
 func (db *DB) GetAll() map[string]utils.Metrics {
