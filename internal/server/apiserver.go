@@ -2,9 +2,11 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 
+	"github.com/MustCo/Mon_go/internal/utils"
 	"github.com/labstack/echo/v4"
 )
 
@@ -28,10 +30,20 @@ func NewUpdateHandler() *UpdateHandler {
 
 func (handler *UpdateHandler) getAllMetrics(c echo.Context) error {
 	metrics := handler.DB.GetAll()
+	answer := ""
 	resp := c.Response()
-	resp.Header().Set("Content-Type", "application/json")
+	resp.Header().Set("Content-Type", "text/plain")
+	for _, m := range metrics {
+		answer += m.ID
+		switch m.MType {
+		case "counter":
+			answer += fmt.Sprintf(" - %d\n", *m.Delta)
+		case "gauge":
+			answer += fmt.Sprintf(" - %.3f\n", *m.Value)
+		}
 
-	return c.JSON(http.StatusOK, metrics)
+	}
+	return c.HTML(http.StatusOK, answer)
 }
 
 func (handler *UpdateHandler) getMetric(c echo.Context) error {
@@ -44,7 +56,7 @@ func (handler *UpdateHandler) getMetric(c echo.Context) error {
 	}
 	resp := c.Response()
 	resp.Header().Set("Content-Type", "application/json")
-	return c.JSON(http.StatusOK, val)
+	return c.HTML(http.StatusOK, *val)
 }
 func (handler *UpdateHandler) postMetric(c echo.Context) error {
 
@@ -65,11 +77,47 @@ func (handler *UpdateHandler) postMetric(c echo.Context) error {
 
 }
 
+func (handler *UpdateHandler) updateJSON(c echo.Context) error {
+	m := new(utils.Metrics)
+	m.Delta = new(int64)
+	m.Value = new(float64)
+	err := c.Bind(m)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
+	switch {
+	}
+	err = handler.DB.SetMetrica(m)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
+	return nil
+}
+func (handler *UpdateHandler) getJSON(c echo.Context) error {
+	m := new(utils.Metrics)
+	m.Delta = new(int64)
+	m.Value = new(float64)
+	err := c.Bind(m)
+	if err != nil {
+		return err
+	}
+	metrics, err := handler.DB.GetMetrica(m.MType, m.ID)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusNotFound, err.Error())
+	}
+	resp := c.Response()
+	resp.Header().Set("Content-Type", "application/json")
+
+	return c.JSONPretty(http.StatusOK, metrics, "   ")
+}
+
 func (s *APIServer) Start(ctx context.Context) error {
 	updater := NewUpdateHandler()
 	e := echo.New()
 	e.GET("/", updater.getAllMetrics)
 	e.GET("/value/:type/:name", updater.getMetric)
 	e.POST("/update/:type/:name/:value", updater.postMetric)
+	e.POST("/update/", updater.updateJSON)
+	e.POST("/value/", updater.getJSON)
 	return e.Start(s.config.BindAddr)
 }

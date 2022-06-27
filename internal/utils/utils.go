@@ -50,8 +50,7 @@ func NewMetrics(id, mtype string) *Metrics {
 type MetricsStorage map[string]Metrics
 
 func NewMetricsStorage() MetricsStorage {
-	m := NewMetrics("PollCount", "counter")
-	return MetricsStorage{m.ID: *m}
+	return MetricsStorage{}
 }
 
 func (m MetricsStorage) Poll() {
