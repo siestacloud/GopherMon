@@ -65,10 +65,12 @@ func (db *DB) SetMetrica(metrica *utils.Metrics) error {
 	case "gauge":
 		db.mut.Lock()
 		*db.Metrics[metrica.ID].Value = *metrica.Value
+		*db.Metrics[metrica.ID].Delta = 0
 		db.mut.Unlock()
 	case "counter":
 		db.mut.Lock()
 		*db.Metrics[metrica.ID].Delta += *metrica.Delta
+		*db.Metrics[metrica.ID].Value = 0
 		db.mut.Unlock()
 
 	default:
