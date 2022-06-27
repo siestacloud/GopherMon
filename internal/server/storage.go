@@ -29,26 +29,27 @@ type DB struct {
 }
 
 func (db *DB) Set(t, name, val string) error {
-	metrica := utils.NewMetrics(name, t)
-	switch metrica.MType {
+	db.mut.Lock()
+	if _, ok := db.Metrics[name]; !ok {
+		db.Metrics[name] = *utils.NewMetrics(name, t)
+	}
+	defer db.mut.Unlock()
+	switch t {
 	case "counter":
 		d, err := strconv.ParseInt(val, 10, 64)
 		if err != nil {
 			return err
 		}
-		*metrica.Delta += d
+		*db.Metrics[name].Delta += d
 	case "gauge":
 		v, err := strconv.ParseFloat(val, 64)
 		if err != nil {
 			return err
 		}
-		metrica.Value = &v
+		*db.Metrics[name].Value = v
 	default:
 		return errors.New("invalid type")
 	}
-	db.mut.Lock()
-	db.Metrics[metrica.ID] = *metrica
-	db.mut.Unlock()
 	return nil
 
 }
