@@ -55,6 +55,9 @@ func NewMetricsStorage() MetricsStorage {
 
 func (m MetricsStorage) Poll() {
 	g := "gauge"
+	if _, ok := m["PollCount"]; !ok {
+		m["PollCount"] = *NewMetrics("PollCount", "counter")
+	}
 	*m["PollCount"].Delta += 1
 	metrics := &runtime.MemStats{}
 	runtime.ReadMemStats(metrics)

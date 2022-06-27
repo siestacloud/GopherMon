@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/MustCo/Mon_go/internal/utils"
@@ -24,7 +23,7 @@ func New(config *Config) *APIAgent {
 
 func (c *APIAgent) Report(ms utils.MetricsStorage) error {
 	for _, v := range ms {
-		err := c.sendMetric(&v)
+		err := c.sendJSON(&v)
 		if err != nil {
 			return err
 		}
@@ -32,24 +31,13 @@ func (c *APIAgent) Report(ms utils.MetricsStorage) error {
 	return nil
 }
 
-func (c *APIAgent) sendMetric(m *utils.Metrics) error {
-
-	var val string
-	switch m.MType {
-	case "gauge":
-		val = strconv.FormatFloat(float64(*m.Value), 'f', 3, 64)
-	case "counter":
-		val = strconv.FormatInt(int64(*m.Delta), 10)
-	}
-	log.Printf("Send metric: %v", m)
+func (c *APIAgent) sendJSON(m *utils.Metrics) error {
 	resp, err := c.client.R().
+		SetBody(*m).
 		SetPathParams(map[string]string{
 			"host": c.config.ReportAddr,
-			"type": m.MType,
-			"name": m.ID,
-			"val":  val,
 		}).
-		Post("http://{host}/update/{type}/{name}/{val}")
+		Post("http://{host}/update/")
 	if err != nil {
 		return err
 	}
@@ -63,13 +51,14 @@ func (c *APIAgent) sendMetric(m *utils.Metrics) error {
 		return errors.New("invalid status code")
 	}
 	return nil
+
 }
 
 func (c *APIAgent) Start(ctx context.Context) error {
 	m := utils.NewMetricsStorage()
 	c.client = resty.New()
 	c.client.R().
-		SetHeader("Content-Type", "text/plain")
+		SetHeader("Content-Type", "application/json")
 
 	reports := time.NewTicker(time.Duration(c.config.ReportInterval) * time.Second)
 	polls := time.NewTicker(time.Duration(c.config.PollInterval) * time.Second)
