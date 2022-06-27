@@ -30,9 +30,6 @@ type DB struct {
 
 func (db *DB) Set(t, name, val string) error {
 	db.mut.Lock()
-	if _, ok := db.Metrics[name]; !ok {
-		db.Metrics[name] = *utils.NewMetrics(name, t)
-	}
 	defer db.mut.Unlock()
 	switch t {
 	case "counter":
@@ -40,13 +37,22 @@ func (db *DB) Set(t, name, val string) error {
 		if err != nil {
 			return err
 		}
-		*db.Metrics[name].Delta += d
+		m := *utils.NewMetrics(name, t)
+		*m.Delta = d
+		if db.Metrics[name].Delta != nil {
+			*m.Delta += *db.Metrics[name].Delta
+		}
+		m.Value = nil
+		db.Metrics[name] = m
 	case "gauge":
 		v, err := strconv.ParseFloat(val, 64)
 		if err != nil {
 			return err
 		}
-		*db.Metrics[name].Value = v
+		m := *utils.NewMetrics(name, t)
+		*m.Value = v
+		m.Delta = nil
+		db.Metrics[name] = m
 	default:
 		return errors.New("invalid type")
 	}
@@ -55,24 +61,22 @@ func (db *DB) Set(t, name, val string) error {
 }
 
 func (db *DB) SetMetrica(metrica *utils.Metrics) error {
-	db.mut.Lock()
-	if _, ok := db.Metrics[metrica.ID]; !ok {
-		db.Metrics[metrica.ID] = utils.Metrics{ID: metrica.ID, MType: metrica.MType}
-	}
-	db.mut.Unlock()
 
 	switch metrica.MType {
 	case "gauge":
 		db.mut.Lock()
-		m := db.Metrics[metrica.ID]
-		*m.Value = *metrica.Value
+		m := *utils.NewMetrics(metrica.ID, metrica.MType)
+		m.Value = metrica.Value
 		m.Delta = nil
 		db.Metrics[metrica.ID] = m
 		db.mut.Unlock()
 	case "counter":
 		db.mut.Lock()
-		m := db.Metrics[metrica.ID]
-		*m.Delta = *metrica.Delta
+		m := *utils.NewMetrics(metrica.ID, metrica.MType)
+		m.Delta = metrica.Delta
+		if db.Metrics[metrica.ID].Delta != nil {
+			*m.Delta += *db.Metrics[metrica.ID].Delta
+		}
 		m.Value = nil
 		db.Metrics[metrica.ID] = m
 		db.mut.Unlock()
