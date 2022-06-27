@@ -57,20 +57,24 @@ func (db *DB) Set(t, name, val string) error {
 func (db *DB) SetMetrica(metrica *utils.Metrics) error {
 	db.mut.Lock()
 	if _, ok := db.Metrics[metrica.ID]; !ok {
-		db.Metrics[metrica.ID] = *utils.NewMetrics(metrica.ID, metrica.MType)
+		db.Metrics[metrica.ID] = utils.Metrics{ID: metrica.ID, MType: metrica.MType}
 	}
 	db.mut.Unlock()
 
 	switch metrica.MType {
 	case "gauge":
 		db.mut.Lock()
-		*db.Metrics[metrica.ID].Value = *metrica.Value
-		*db.Metrics[metrica.ID].Delta = 0
+		m := db.Metrics[metrica.ID]
+		*m.Value = *metrica.Value
+		m.Delta = nil
+		db.Metrics[metrica.ID] = m
 		db.mut.Unlock()
 	case "counter":
 		db.mut.Lock()
-		*db.Metrics[metrica.ID].Delta += *metrica.Delta
-		*db.Metrics[metrica.ID].Value = 0
+		m := db.Metrics[metrica.ID]
+		*m.Delta = *metrica.Delta
+		m.Value = nil
+		db.Metrics[metrica.ID] = m
 		db.mut.Unlock()
 
 	default:
