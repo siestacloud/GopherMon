@@ -8,16 +8,19 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestDB_Set(t *testing.T) {
-
-	init_db := NewDB()
-	init_db.Metrics = utils.NewMetricsStorage()
+func getInitDB() *DB {
+	initDB := NewDB()
+	initDB.Metrics = utils.NewMetricsStorage()
 	m := utils.NewMetrics("TestGauge", "gauge")
 	*m.Value = 123.123
-	init_db.Metrics["TestGauge"] = *m
+	initDB.Metrics["TestGauge"] = *m
 	m = utils.NewMetrics("TestCounter", "counter")
 	*m.Delta = 123
-	init_db.Metrics["TestCounter"] = *m
+	initDB.Metrics["TestCounter"] = *m
+	return initDB
+}
+
+func TestDB_Set(t *testing.T) {
 
 	type args struct {
 		t    string
@@ -36,7 +39,7 @@ func TestDB_Set(t *testing.T) {
 	}{
 		{
 			name: "TestGauge",
-			db:   init_db,
+			db:   getInitDB(),
 			args: args{t: "gauge", name: "Mymetric", val: "1.329184"},
 			want: want{
 				err: nil,
@@ -44,7 +47,7 @@ func TestDB_Set(t *testing.T) {
 		},
 		{
 			name: "TestInvalidGauge",
-			db:   init_db,
+			db:   getInitDB(),
 			args: args{t: "gauge", name: "Mymetric", val: "1,FSD29184"},
 			want: want{
 				err: errors.New("error"),
@@ -52,60 +55,60 @@ func TestDB_Set(t *testing.T) {
 		},
 		{
 			name: "TestCounter",
-			db:   init_db,
-			args: args{t: "Counter", name: "Mymetric", val: "14563"},
+			db:   getInitDB(),
+			args: args{t: "counter", name: "Mymetric", val: "14563"},
 			want: want{
 				err: nil,
 			},
 		},
 		{
 			name: "TestInvalidCounter",
-			db:   init_db,
-			args: args{t: "Counter", name: "Mymetric", val: "1.329184"},
+			db:   getInitDB(),
+			args: args{t: "counter", name: "Mymetric", val: "1.329184"},
 			want: want{
 				err: errors.New("error"),
 			},
 		},
 		{
 			name: "TestInvalidType",
-			db:   init_db,
+			db:   getInitDB(),
 			args: args{t: "Mytype", name: "Mymetric", val: "1sdfgsd4"},
 			want: want{
 				err: errors.New("invalid type"),
 			},
 		}}
 	for i, test := range tests {
-		db := NewDB()
-		db.Metrics = utils.NewMetricsStorage()
-		m := utils.NewMetrics("TestGauge", "gauge")
-		*m.Value = 123.123
-		db.Metrics["TestGauge"] = *m
-		m = utils.NewMetrics("TestCounter", "counter")
-		*m.Delta = 123
-		db.Metrics["TestCounter"] = *m
+		db := getInitDB()
 		db.Set(test.args.t, test.args.name, test.args.val)
 		tests[i].want.db = db
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tt.db.Set(tt.args.t, tt.args.name, tt.args.val)
+			err := tt.db.Set(tt.args.t, tt.args.name, tt.args.val)
+			if err != nil {
+				if tt.want.err != nil {
+					return
+				}
+				assert.Equal(t, err.Error(), tt.want.err.Error())
+			}
+			assert.Equal(t, tt.want.db, tt.db)
 		})
 	}
 }
 
 func TestDB_Get(t *testing.T) {
-	init_db := NewDB()
-	init_db.Set("gauge", "TestGauge", "123.123")
-	init_db.Set("counter", "TestCounter", "123")
-	init_db.Set("gauge", "Mygauge", "14.563")
-	init_db.Set("counter", "Mycounter", "14563")
+	initDB := NewDB()
+	initDB.Set("gauge", "TestGauge", "123.123")
+	initDB.Set("counter", "TestCounter", "123")
+	initDB.Set("gauge", "Mygauge", "14.563")
+	initDB.Set("counter", "Mycounter", "14563")
 
 	type args struct {
 		t    string
 		name string
 	}
 	type want struct {
-		res utils.Metrics
+		res string
 		err error
 	}
 	tests := []struct {
@@ -116,41 +119,41 @@ func TestDB_Get(t *testing.T) {
 	}{
 		{
 			name: "TestGauge",
-			db:   init_db,
+			db:   initDB,
 			args: args{t: "gauge", name: "Mygauge"},
-			want: want{res: init_db.Metrics["Mygauge"],
+			want: want{res: "14.563",
 				err: nil,
 			},
 		},
 		{
 			name: "TestInvalidGauge",
-			db:   init_db,
+			db:   initDB,
 			args: args{t: "gauge", name: "Unknown"},
-			want: want{res: *utils.NewMetrics("Mymetric", "untype"),
+			want: want{res: "",
 				err: errors.New("unknown metric"),
 			},
 		},
 		{
 			name: "TestCounter",
-			db:   init_db,
+			db:   initDB,
 			args: args{t: "counter", name: "Mycounter"},
-			want: want{res: init_db.Metrics["Mycounter"],
+			want: want{res: "14563",
 				err: nil,
 			},
 		},
 		{
 			name: "TestInvalidCounter",
-			db:   init_db,
+			db:   initDB,
 			args: args{t: "counter", name: "Unknown"},
-			want: want{res: *utils.NewMetrics("Mymetric", "untype"),
+			want: want{res: "",
 				err: errors.New("unknown metric"),
 			},
 		},
 		{
 			name: "TestInvalidType",
-			db:   init_db,
+			db:   initDB,
 			args: args{t: "untype", name: "Mymetric"},
-			want: want{res: *utils.NewMetrics("Mymetric", "untype"),
+			want: want{res: "",
 				err: errors.New("invalid type"),
 			},
 		}}
