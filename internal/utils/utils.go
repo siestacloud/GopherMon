@@ -39,11 +39,23 @@ func (m *Metrics) String() string {
 }
 
 func NewMetrics(id, mtype string) *Metrics {
+	switch mtype {
+	case "counter":
+		return &Metrics{
+			ID:    id,
+			MType: mtype,
+			Delta: new(int64),
+		}
+	case "gauge":
+		return &Metrics{
+			ID:    id,
+			MType: mtype,
+			Value: new(float64),
+		}
+	}
 	return &Metrics{
 		ID:    id,
 		MType: mtype,
-		Value: new(float64),
-		Delta: new(int64),
 	}
 }
 
