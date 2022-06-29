@@ -23,7 +23,7 @@ func New(config *Config) *APIAgent {
 
 func (c *APIAgent) Report(ms utils.MetricsStorage) error {
 	for _, v := range ms {
-		err := c.sendJSON(&v)
+		err := c.sendJSON(v)
 		if err != nil {
 			return err
 		}

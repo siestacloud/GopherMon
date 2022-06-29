@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/MustCo/Mon_go/internal/utils"
 	"github.com/labstack/echo/v4"
@@ -47,6 +48,7 @@ func (handler *UpdateHandler) getAllMetrics(c echo.Context) error {
 }
 
 func (handler *UpdateHandler) getMetric(c echo.Context) error {
+	var v string
 	t := c.Param("type")
 	name := c.Param("name")
 	log.Printf("Get Metric type:%s name:%s", t, name)
@@ -56,7 +58,12 @@ func (handler *UpdateHandler) getMetric(c echo.Context) error {
 	}
 	resp := c.Response()
 	resp.Header().Set("Content-Type", "application/json")
-	return c.HTML(http.StatusOK, *val)
+	if val.Delta != nil {
+		v = strconv.FormatInt(*val.Delta, 10)
+	} else {
+		v = strconv.FormatFloat(*val.Value, 'e', 3, 64)
+	}
+	return c.HTML(http.StatusOK, v)
 }
 func (handler *UpdateHandler) postMetric(c echo.Context) error {
 
@@ -101,7 +108,7 @@ func (handler *UpdateHandler) getJSON(c echo.Context) error {
 	if err != nil {
 		return err
 	}
-	metrics, err := handler.DB.GetMetrica(m.MType, m.ID)
+	metrics, err := handler.DB.Get(m.MType, m.ID)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusNotFound, err.Error())
 	}

@@ -13,24 +13,21 @@ import (
 type Gauge float64
 type Counter int64
 
+type Metrics struct {
+	ID    string   `json:"id"`
+	MType string   `json:"type"`
+	Delta *int64   `json:"delta,omitempty"`
+	Value *float64 `json:"value,omitempty"`
+}
+
+type MetricsStorage map[string]*Metrics
+
 func (g Gauge) String() string {
 	return strconv.FormatFloat(float64(g), 'f', 3, 64)
 }
 
 func (c Counter) String() string {
 	return strconv.FormatInt(int64(c), 10)
-}
-
-var Types = map[string]bool{
-	"counter": true,
-	"gauge":   true,
-}
-
-type Metrics struct {
-	ID    string   `json:"id"`
-	MType string   `json:"type"`
-	Delta *int64   `json:"delta,omitempty"`
-	Value *float64 `json:"value,omitempty"`
 }
 
 func (m *Metrics) String() string {
@@ -59,8 +56,6 @@ func NewMetrics(id, mtype string) *Metrics {
 	}
 }
 
-type MetricsStorage map[string]Metrics
-
 func NewMetricsStorage() MetricsStorage {
 	return MetricsStorage{}
 }
@@ -68,7 +63,7 @@ func NewMetricsStorage() MetricsStorage {
 func (m MetricsStorage) Poll() {
 	g := "gauge"
 	if _, ok := m["PollCount"]; !ok {
-		m["PollCount"] = *NewMetrics("PollCount", "counter")
+		m["PollCount"] = NewMetrics("PollCount", "counter")
 	}
 	*m["PollCount"].Delta += 1
 	metrics := &runtime.MemStats{}
@@ -76,7 +71,7 @@ func (m MetricsStorage) Poll() {
 	mtrx := reflect.ValueOf(metrics).Elem()
 	for i := 0; i < mtrx.NumField(); i++ {
 		f := mtrx.Field(i)
-		m[mtrx.Type().Field(i).Name] = *NewMetrics(mtrx.Type().Field(i).Name, g)
+		m[mtrx.Type().Field(i).Name] = NewMetrics(mtrx.Type().Field(i).Name, g)
 		switch f.Kind() {
 		case reflect.Int32, reflect.Int64:
 			*m[mtrx.Type().Field(i).Name].Value = float64(f.Int())
@@ -91,7 +86,7 @@ func (m MetricsStorage) Poll() {
 	}
 	seed := rand.NewSource(time.Now().UnixNano())
 	r := rand.New(seed)
-	m["RandomValue"] = *NewMetrics("RandomValue", g)
+	m["RandomValue"] = NewMetrics("RandomValue", g)
 	*m["RandomValue"].Value = r.Float64()
 	log.Println("Poll metrics")
 }

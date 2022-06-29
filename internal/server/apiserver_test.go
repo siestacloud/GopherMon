@@ -15,9 +15,9 @@ func TestUpdateHandler_postMetric(t *testing.T) {
 		r *http.Request
 	}
 	testMetrics := utils.NewMetricsStorage()
-	testMetrics["TestGauge"] = *utils.NewMetrics("TestGauge", "gauge")
+	testMetrics["TestGauge"] = utils.NewMetrics("TestGauge", "gauge")
 	*testMetrics["TestGauge"].Value = 123.124
-	testMetrics["TestCounter"] = *utils.NewMetrics("TestCounter", "counter")
+	testMetrics["TestCounter"] = utils.NewMetrics("TestCounter", "counter")
 	*testMetrics["TestCounter"].Delta = 123
 
 	type want struct {

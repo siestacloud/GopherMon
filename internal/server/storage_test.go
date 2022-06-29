@@ -13,10 +13,10 @@ func getInitDB() *DB {
 	initDB.Metrics = utils.NewMetricsStorage()
 	m := utils.NewMetrics("TestGauge", "gauge")
 	*m.Value = 123.123
-	initDB.Metrics["TestGauge"] = *m
+	initDB.Metrics["TestGauge"] = m
 	m = utils.NewMetrics("TestCounter", "counter")
 	*m.Delta = 123
-	initDB.Metrics["TestCounter"] = *m
+	initDB.Metrics["TestCounter"] = m
 	return initDB
 }
 
