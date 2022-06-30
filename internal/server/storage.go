@@ -37,7 +37,11 @@ func (db *DB) Set(t, name, val string) error {
 		}
 		m = utils.NewMetrics(name, t)
 		db.mut.Lock()
-		*m.Delta = d + *db.Metrics[name].Delta
+		if db.Metrics[name] != nil {
+			*m.Delta = d + *db.Metrics[name].Delta
+		} else {
+			*m.Delta = d
+		}
 		db.mut.Unlock()
 	case "gauge":
 		v, err := strconv.ParseFloat(val, 64)
@@ -75,7 +79,7 @@ func (db *DB) Get(t, name string) (*utils.Metrics, error) {
 	db.mut.Lock()
 	defer db.mut.Unlock()
 	if m, ok := db.Metrics[name]; ok {
-		switch m.MType {
+		switch t {
 		case "gauge", "counter":
 			return m, nil
 		default:

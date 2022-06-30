@@ -57,7 +57,7 @@ func (handler *UpdateHandler) getMetric(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusNotFound, err.Error())
 	}
 	resp := c.Response()
-	resp.Header().Set("Content-Type", "application/json")
+	resp.Header().Set("Content-Type", "text/plain")
 	if val.Delta != nil {
 		v = strconv.FormatInt(*val.Delta, 10)
 	} else {

@@ -10,7 +10,6 @@ import (
 
 func getInitDB() *DB {
 	initDB := NewDB()
-	initDB.Metrics = utils.NewMetricsStorage()
 	m := utils.NewMetrics("TestGauge", "gauge")
 	*m.Value = 123.123
 	initDB.Metrics["TestGauge"] = m
@@ -74,7 +73,7 @@ func TestDB_Set(t *testing.T) {
 			db:   getInitDB(),
 			args: args{t: "Mytype", name: "Mymetric", val: "1sdfgsd4"},
 			want: want{
-				err: errors.New("invalid type"),
+				err: errors.New("unknown metric"),
 			},
 		}}
 	for i, test := range tests {
@@ -108,7 +107,7 @@ func TestDB_Get(t *testing.T) {
 		name string
 	}
 	type want struct {
-		res string
+		res *utils.Metrics
 		err error
 	}
 	tests := []struct {
@@ -121,7 +120,7 @@ func TestDB_Get(t *testing.T) {
 			name: "TestGauge",
 			db:   initDB,
 			args: args{t: "gauge", name: "Mygauge"},
-			want: want{res: "14.563",
+			want: want{res: initDB.Metrics["Mygauge"],
 				err: nil,
 			},
 		},
@@ -129,7 +128,7 @@ func TestDB_Get(t *testing.T) {
 			name: "TestInvalidGauge",
 			db:   initDB,
 			args: args{t: "gauge", name: "Unknown"},
-			want: want{res: "",
+			want: want{res: nil,
 				err: errors.New("unknown metric"),
 			},
 		},
@@ -137,7 +136,7 @@ func TestDB_Get(t *testing.T) {
 			name: "TestCounter",
 			db:   initDB,
 			args: args{t: "counter", name: "Mycounter"},
-			want: want{res: "14563",
+			want: want{res: initDB.Metrics["Mycounter"],
 				err: nil,
 			},
 		},
@@ -145,15 +144,23 @@ func TestDB_Get(t *testing.T) {
 			name: "TestInvalidCounter",
 			db:   initDB,
 			args: args{t: "counter", name: "Unknown"},
-			want: want{res: "",
+			want: want{res: nil,
+				err: errors.New("unknown metric"),
+			},
+		},
+		{
+			name: "TestInvalidType&Name",
+			db:   initDB,
+			args: args{t: "untype", name: "Mymetric"},
+			want: want{res: nil,
 				err: errors.New("unknown metric"),
 			},
 		},
 		{
 			name: "TestInvalidType",
 			db:   initDB,
-			args: args{t: "untype", name: "Mymetric"},
-			want: want{res: "",
+			args: args{t: "untype", name: "Mygauge"},
+			want: want{res: nil,
 				err: errors.New("invalid type"),
 			},
 		}}
@@ -164,7 +171,7 @@ func TestDB_Get(t *testing.T) {
 				assert.Equal(t, err.Error(), tt.want.err.Error())
 				return
 			}
-			assert.Equal(t, tt.want.res, *got)
+			assert.Equal(t, tt.want.res, got)
 		})
 	}
 }

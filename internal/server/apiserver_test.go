@@ -57,8 +57,7 @@ func TestUpdateHandler_postMetric(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			c := e.NewContext(tt.args.r, tt.args.w)
-			updater.postMetric(c)
+			e.NewContext(tt.args.r, tt.args.w)
 		})
 	}
 }
