@@ -61,7 +61,7 @@ func (handler *UpdateHandler) getMetric(c echo.Context) error {
 	if val.Delta != nil {
 		v = strconv.FormatInt(*val.Delta, 10)
 	} else {
-		v = strconv.FormatFloat(*val.Value, 'e', 3, 64)
+		v = strconv.FormatFloat(*val.Value, 'f', 3, 64)
 	}
 	return c.HTML(http.StatusOK, v)
 }
