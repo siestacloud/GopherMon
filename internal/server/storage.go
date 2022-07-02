@@ -37,7 +37,7 @@ func (db *DB) Set(t, name, val string) error {
 		}
 		m = utils.NewMetrics(name, t)
 		db.mut.Lock()
-		if db.Metrics[name] != nil {
+		if db.Metrics[name] != nil && db.Metrics[name].Delta != nil {
 			*m.Delta = d + *db.Metrics[name].Delta
 		} else {
 			*m.Delta = d
@@ -63,10 +63,19 @@ func (db *DB) Set(t, name, val string) error {
 func (db *DB) SetMetrica(metrica *utils.Metrics) error {
 
 	switch metrica.MType {
-	case "gauge", "counter":
+	case "gauge":
 		db.mut.Lock()
 		db.Metrics[metrica.ID] = metrica
 		db.mut.Unlock()
+	case "counter":
+		db.mut.Lock()
+		if db.Metrics[metrica.ID] != nil && db.Metrics[metrica.ID].Delta != nil {
+			*db.Metrics[metrica.ID].Delta += *metrica.Delta
+		} else {
+			db.Metrics[metrica.ID] = metrica
+		}
+		db.mut.Unlock()
+
 	default:
 		return errors.New("invalid type")
 	}
