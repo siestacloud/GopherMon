@@ -39,6 +39,7 @@ func (db *DB) Set(t, name, val string) error {
 		db.mut.Lock()
 		if db.Metrics[name] != nil && db.Metrics[name].Delta != nil {
 			*m.Delta = d + *db.Metrics[name].Delta
+			db.Metrics[name].Value = nil
 		} else {
 			*m.Delta = d
 		}
@@ -66,6 +67,7 @@ func (db *DB) SetMetrica(metrica *utils.Metrics) error {
 	case "gauge":
 		db.mut.Lock()
 		db.Metrics[metrica.ID] = metrica
+		db.Metrics[metrica.ID].Delta = nil
 		db.mut.Unlock()
 	case "counter":
 		db.mut.Lock()
@@ -74,6 +76,7 @@ func (db *DB) SetMetrica(metrica *utils.Metrics) error {
 		} else {
 			db.Metrics[metrica.ID] = metrica
 		}
+		db.Metrics[metrica.ID].Value = nil
 		db.mut.Unlock()
 
 	default:
