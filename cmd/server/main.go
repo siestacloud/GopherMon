@@ -27,6 +27,7 @@ func main() {
 	}
 	json.Unmarshal(data, config)
 	ctx := context.TODO()
+	config = server.EnvConfig()
 	server := server.New(config)
 	log.Fatal(server.Start(ctx))
 
