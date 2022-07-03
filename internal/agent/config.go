@@ -29,16 +29,16 @@ func EnvConfig() *Config {
 	} else {
 		address = "127.0.0.1:8080"
 	}
-	if report_s := os.Getenv("REPORT_INTERVAL"); report_s != "" {
-		report, err = strconv.ParseInt(report_s, 10, 64)
+	if reportS := os.Getenv("REPORT_INTERVAL"); reportS != "" {
+		report, err = strconv.ParseInt(reportS, 10, 64)
 		if err != nil {
 			log.Fatal(err)
 		}
 	} else {
 		report = 10
 	}
-	if poll_s := os.Getenv("REPORT_INTERVAL"); poll_s != "" {
-		poll, err = strconv.ParseInt(poll_s, 10, 64)
+	if pollS := os.Getenv("REPORT_INTERVAL"); pollS != "" {
+		poll, err = strconv.ParseInt(pollS, 10, 64)
 		if err != nil {
 			log.Fatal(err)
 		}
