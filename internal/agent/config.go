@@ -37,7 +37,7 @@ func EnvConfig() *Config {
 	} else {
 		report = 10
 	}
-	if pollS := os.Getenv("REPORT_INTERVAL"); pollS != "" {
+	if pollS := os.Getenv("POLL_INTERVAL"); pollS != "" {
 		poll, err = strconv.ParseInt(pollS, 10, 64)
 		if err != nil {
 			log.Fatal(err)
