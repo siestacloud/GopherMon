@@ -1,9 +1,0 @@
-{
- "M": {
-  "Mallocs": {
-   "id": "Mallocs",
-   "type": "gauge",
-   "value": 3936
-  }
- }
-}

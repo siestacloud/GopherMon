@@ -16,6 +16,7 @@ type Server struct {
 	Restore       bool          `env:"RESTORE" mapstructure:"restore"` //
 	StoreInterval time.Duration `env:"STORE_INTERVAL" mapstructure:"storeinterval"`
 	StoreFile     string        `env:"STORE_FILE" mapstructure:"storefile"`
+	Key           string        `env:"KEY" mapstructure:"storefile"`
 	Timeout       struct {
 		// Server is the general server timeout to use
 		// for graceful shutdowns

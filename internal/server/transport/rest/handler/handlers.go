@@ -86,6 +86,12 @@ func (h *Handler) UpdateJSON() echo.HandlerFunc {
 		}
 		infoPrint("in tune", "	success parse in object mtrx")
 
+		err = h.services.CheckHash(h.cfg.Key, mtrx)
+		if err != nil {
+			return errResponse(c, http.StatusBadRequest, "unable compare hash: "+err.Error())
+		}
+		infoPrint("in tune", "	success compared hash")
+
 		err = h.services.Add(mtrx.GetID(), mtrx)
 		if err != nil {
 			return errResponse(c, http.StatusBadRequest, "unable read data from body request: "+err.Error())

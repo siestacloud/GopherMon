@@ -34,12 +34,13 @@ func main() {
 		log.Fatal(err)
 	}
 
+	// если в cfg задан путь до файла с mtrx и задан интервал
 	if cfg.StoreFile != "" {
 		if cfg.StoreInterval != 0 {
 			if err := mp.RLS(cfg.StoreFile); err != nil {
 				log.Fatal(err)
 			}
-
+			// пул будет сохранятся на диск с опр интервалом
 			go func() {
 				for {
 					time.Sleep(cfg.StoreInterval)

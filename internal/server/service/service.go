@@ -1,11 +1,14 @@
 package service
 
 import (
+	"errors"
+
 	"github.com/siestacloud/service-monitoring/internal/core"
 	"github.com/siestacloud/service-monitoring/internal/server/repository"
 	"github.com/sirupsen/logrus"
 )
 
+// интерфейс для работы со слоем Service
 type RAM interface {
 	GetAlljson() ([]byte, error)
 	LookUP(key string) *core.Metric
@@ -14,12 +17,15 @@ type RAM interface {
 	Update(key string, mtrx *core.Metric) error
 	ReadLocalStorage(fn string) (*core.MetricsPool, error)
 	WriteLocalStorage(fn string) error
+	CheckHash(key string, mtrx *core.Metric) error
 }
 
+// Главный тип слоя SVC, который встраивается как зависимость в слое TRANSPORT
 type Service struct {
 	RAM
 }
 
+// Конструктор слоя SVC
 func NewService(repos *repository.Repository) *Service {
 	return &Service{
 		RAM: newRAMService(repos.RAM),
@@ -35,6 +41,21 @@ func newRAMService(repo repository.RAM) *RAMService {
 	return &RAMService{
 		repo: repo,
 	}
+}
+
+func (r *RAMService) CheckHash(key string, mtrx *core.Metric) error {
+
+	hash := mtrx.GetHash()
+
+	err := mtrx.SetHash(key)
+	if err != nil {
+		return err
+	}
+	nhash := mtrx.GetHash()
+	if hash == nhash {
+		return nil
+	}
+	return errors.New("hashes are not compared " + hash + " != " + nhash)
 }
 
 func (r *RAMService) GetAlljson() ([]byte, error) {

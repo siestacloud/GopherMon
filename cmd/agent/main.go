@@ -28,6 +28,7 @@ type (
 		Address        string        `env:"ADDRESS"`
 		PollInterval   time.Duration `env:"POLL_INTERVAL"`
 		ReportInterval time.Duration `env:"REPORT_INTERVAL"`
+		Key            string        `env:"KEY"`
 	}
 
 	APIError struct {
@@ -48,6 +49,7 @@ func init() {
 	flag.StringVar(&cfg.Address, "a", "localhost:8080", "Address for server. Possible values: localhost:8080")
 	flag.DurationVar(&cfg.PollInterval, "p", 2000000000, "Poll interval. Possible values: 1s 12s 1m")
 	flag.DurationVar(&cfg.ReportInterval, "r", 10000000000, "Report interval. Possible values: 1s 12s 1m")
+	flag.StringVar(&cfg.Key, "k", "", "key for data sign. Possible values: 123qwe123")
 	flag.Parse()
 
 	err := env.Parse(&cfg)
@@ -112,7 +114,7 @@ func url() {
 	logger.Out = ioutil.Discard
 
 	for _, metric := range mp.M {
-		// fmt.Println(metric, "   ", metric.Value)
+		fmt.Println(metric, "   ", metric.Value)
 		client := resty.New().SetRetryCount(2).SetLogger(logger).
 			SetRetryWaitTime(1 * time.Second).
 			SetRetryMaxWaitTime(2 * time.Second)
@@ -184,6 +186,9 @@ func mtrxMotion(c int64, cms *runtime.MemStats) (*core.MetricsPool, error) {
 	if err := pollCount.SetValue(c); err != nil {
 		return nil, err
 	}
+	if err := pollCount.SetHash(cfg.Key); err != nil {
+		return nil, err
+	}
 	if err := mtrxPool.Create(pollCount.ID, *pollCount); err != nil {
 		return nil, errors.New("unable add PollCount mtrx into MetricsPool: " + pollCount.GetID() + pollCount.GetType())
 	}
@@ -200,7 +205,9 @@ func mtrxMotion(c int64, cms *runtime.MemStats) (*core.MetricsPool, error) {
 	if err := randomValue.SetValue(rand.Float64()); err != nil {
 		return nil, err
 	}
-
+	if err := randomValue.SetHash(cfg.Key); err != nil {
+		return nil, err
+	}
 	if err := mtrxPool.Create(randomValue.ID, *randomValue); err != nil {
 		return nil, errors.New("unable add PollCount mtrx into MetricsPool: " + randomValue.GetID() + randomValue.GetType())
 	}
@@ -222,6 +229,9 @@ func mtrxMotion(c int64, cms *runtime.MemStats) (*core.MetricsPool, error) {
 		}
 		if err := m.SetValue(v); err != nil {
 			continue
+		}
+		if err := m.SetHash(cfg.Key); err != nil {
+			return nil, err
 		}
 		if err := mtrxPool.Create(m.ID, *m); err != nil { // Метрика добавляется в общий пул (мапку)
 			return nil, errors.New("unable add runtime mtrx into MetricsPool: " + m.GetID() + "  " + m.GetType())

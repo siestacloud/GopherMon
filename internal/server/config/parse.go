@@ -14,7 +14,6 @@ func Parse(cfg *Cfg) error {
 	// Читаю конфиг
 	viper.AutomaticEnv()
 	viper.SetConfigType("yaml")
-	viper.AddConfigPath("$HOME/.mon.yaml")
 	viper.AddConfigPath("./configs/")
 	viper.AddConfigPath(".")
 	err := viper.ReadInConfig()
@@ -29,6 +28,7 @@ func Parse(cfg *Cfg) error {
 	flag.StringVar(&cfg.StoreFile, "f", "/tmp/devops-metrics-db.json", "Path to store file. Possible values: /path/to/file")
 	flag.StringVar(&cfg.Address, "a", "localhost:8080", "Address for server. Possible values: localhost:8080")
 	flag.BoolVar(&cfg.Restore, "r", true, "Restore metrics pool. Possible values: true false")
+	flag.StringVar(&cfg.Key, "k", "", "key for data sign. Possible values: 123qwe123")
 	flag.Parse()
 
 	// Читаю переменные окружения, переопределяю параметры, если пер окр заданы

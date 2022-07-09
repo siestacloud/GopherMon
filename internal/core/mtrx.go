@@ -1,8 +1,11 @@
 package core
 
 import (
+	"crypto/hmac"
+	"crypto/sha256"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"strconv"
 )
@@ -13,6 +16,7 @@ type Metric struct {
 	MType string   `json:"type"`            // параметр, принимающий значение gauge или counter
 	Delta *int64   `json:"delta,omitempty"` // значение метрики в случае передачи counter
 	Value *float64 `json:"value,omitempty"` // значение метрики в случае передачи gauge
+	Hash  string   `json:"hash,omitempty"`  // значение хеш-функции
 }
 
 //СОздает метрику
@@ -185,6 +189,9 @@ func (m *Metric) UnmarshalMetricJSON(data []byte) error {
 	if err != nil {
 		return err //Проверка не пройдена
 	}
+
+	m.Hash = mtrxCheck.Hash
+
 	if m.GetType() == "counter" { //Если у новой метрики тип counter
 		d, err := mtrxCheck.GetDelta()
 		if err != nil {
@@ -202,4 +209,39 @@ func (m *Metric) UnmarshalMetricJSON(data []byte) error {
 		return nil
 	}
 	return errors.New("something incorrect")
+}
+
+// Вычисляем hash метрики
+func (m *Metric) SetHash(key string) error {
+	if key != "" {
+		var sign string
+		switch m.GetType() {
+		case "counter":
+			sign = hash(fmt.Sprintf("%s:counter:%d", m.ID, *m.Delta), key)
+
+		case "gauge":
+			sign = hash(fmt.Sprintf("%s:gauge:%f", m.ID, *m.Value), key)
+		default:
+			return errors.New("unable set hash invalid type mtrx")
+		}
+		m.Hash = sign
+		return nil
+	}
+	return nil
+}
+
+//Получить ID
+func (m *Metric) GetHash() string {
+	return m.Hash
+}
+
+func hash(str, key string) string {
+
+	var secretkey = []byte(key)
+	var data = []byte(str)
+
+	h := hmac.New(sha256.New, secretkey)
+	h.Write(data)
+	sign := h.Sum(nil)
+	return fmt.Sprintf("%x", sign)
 }
