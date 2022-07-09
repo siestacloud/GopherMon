@@ -209,7 +209,7 @@ func mtrxMotion(c int64, cms *runtime.MemStats) (*core.MetricsPool, error) {
 		return nil, err
 	}
 	if err := mtrxPool.Create(randomValue.ID, *randomValue); err != nil {
-		return nil, errors.New("unable add PollCount mtrx into MetricsPool: " + randomValue.GetID() + randomValue.GetType())
+		return nil, errors.New("unable add randomValue mtrx into MetricsPool: " + randomValue.GetID() + randomValue.GetType())
 	}
 
 	//Создаю метрики из пакета runtime / у cms тип runtime.MemStats

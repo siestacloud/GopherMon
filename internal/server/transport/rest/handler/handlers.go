@@ -190,6 +190,8 @@ func (h *Handler) ShowMetricJSON() echo.HandlerFunc {
 		}
 		infoPrint("in tune", fmt.Sprintf("	mtrx in db: %+v", mtrx))
 
+		sMtrx.SetHash(h.cfg.Key)
+
 		var buf bytes.Buffer
 		err := sMtrx.MarshalMetricsinJSON(&buf)
 		if err != nil {
