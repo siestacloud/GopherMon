@@ -1,16 +1,17 @@
-package mtrx
+package repository
 
 import (
 	"testing"
 
+	"github.com/siestacloud/service-monitoring/internal/core"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestNewMetricPool(t *testing.T) {
-	tmp := NewMetricsPool()
+	tmp := core.NewMetricsPool()
 	test := []struct {
 		name string
-		want *MetricsPool
+		want *core.MetricsPool
 	}{
 		{
 			name: "Test #1",
@@ -18,7 +19,7 @@ func TestNewMetricPool(t *testing.T) {
 		},
 	}
 	for _, tt := range test {
-		mp := NewMetricsPool()
+		mp := core.NewMetricsPool()
 		assert.Equal(t, tt.want.M, mp.M)
 	}
 }

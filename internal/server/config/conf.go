@@ -3,17 +3,20 @@ package config
 import "time"
 
 //Config Server configuration struct
-type ServerConfig struct {
+type Cfg struct {
 	Server `mapstructure:"server"`
 }
 
 type Server struct {
-	LogLevel      string        `mapstructure:"log_level"`
-	LogFile       string        `mapstructure:"log_file"`
-	Address       string        `env:"ADDRESS" mapstructure:"address"`
-	Restore       bool          `env:"RESTORE" mapstructure:"restore"`
+	Logrus struct {
+		LogLevel string `env:"LOGSLEVEL" mapstructure:"level"` // info,debug
+		JSON     string `env:"JSONLOGS" mapstructure:"json"`   // log format in json
+	}
+	Address       string        `env:"ADDRESS" mapstructure:"address"` // address+port for server
+	Restore       bool          `env:"RESTORE" mapstructure:"restore"` //
 	StoreInterval time.Duration `env:"STORE_INTERVAL" mapstructure:"storeinterval"`
 	StoreFile     string        `env:"STORE_FILE" mapstructure:"storefile"`
+	Key           string        `env:"KEY" mapstructure:"storefile"`
 	Timeout       struct {
 		// Server is the general server timeout to use
 		// for graceful shutdowns

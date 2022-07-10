@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
@@ -17,7 +18,7 @@ import (
 
 	"github.com/caarlos0/env/v6"
 	"github.com/go-resty/resty/v2"
-	"github.com/siestacloud/service-monitoring/internal/mtrx"
+	"github.com/siestacloud/service-monitoring/internal/core"
 	"github.com/sirupsen/logrus"
 )
 
@@ -27,6 +28,7 @@ type (
 		Address        string        `env:"ADDRESS"`
 		PollInterval   time.Duration `env:"POLL_INTERVAL"`
 		ReportInterval time.Duration `env:"REPORT_INTERVAL"`
+		Key            string        `env:"KEY"`
 	}
 
 	APIError struct {
@@ -37,16 +39,17 @@ type (
 )
 
 var (
-	cms runtime.MemStats
-	mp  *mtrx.MetricsPool
-	err error
 	cfg = Config{}
+	cms runtime.MemStats
+	mp  *core.MetricsPool
+	err error
 )
 
-func main() {
+func init() {
 	flag.StringVar(&cfg.Address, "a", "localhost:8080", "Address for server. Possible values: localhost:8080")
 	flag.DurationVar(&cfg.PollInterval, "p", 2000000000, "Poll interval. Possible values: 1s 12s 1m")
 	flag.DurationVar(&cfg.ReportInterval, "r", 10000000000, "Report interval. Possible values: 1s 12s 1m")
+	flag.StringVar(&cfg.Key, "k", "", "key for data sign. Possible values: 123qwe123")
 	flag.Parse()
 
 	err := env.Parse(&cfg)
@@ -54,16 +57,16 @@ func main() {
 		log.Fatal(err)
 	}
 
+	cfgjson, _ := json.MarshalIndent(cfg, "  ", " ")
+	logrus.Info(string(cfgjson))
+}
+func main() {
+
 	ctx, cansel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT)
-	fmt.Println(cfg)
 	defer cansel()
 
-	//Задаем интервал сбора метрик
-	pollInterval := cfg.PollInterval
-	reportInterval := cfg.ReportInterval
-
-	go takeMetrics(ctx, pollInterval)
-	go postMetrics(ctx, reportInterval)
+	go takeMetrics(ctx, cfg.PollInterval)
+	go postMetrics(ctx, cfg.ReportInterval)
 
 	<-ctx.Done()
 	time.Sleep(time.Second)
@@ -111,7 +114,7 @@ func url() {
 	logger.Out = ioutil.Discard
 
 	for _, metric := range mp.M {
-		// fmt.Println(metric, "   ", metric.Value)
+		fmt.Println(metric, "   ", metric.Value)
 		client := resty.New().SetRetryCount(2).SetLogger(logger).
 			SetRetryWaitTime(1 * time.Second).
 			SetRetryMaxWaitTime(2 * time.Second)
@@ -169,11 +172,11 @@ func url() {
 }
 
 //Формирую метрики по заданию, заполняю общий пул метрик
-func mtrxMotion(c int64, cms *runtime.MemStats) (*mtrx.MetricsPool, error) {
-	mtrxPool := mtrx.NewMetricsPool()
+func mtrxMotion(c int64, cms *runtime.MemStats) (*core.MetricsPool, error) {
+	mtrxPool := core.NewMetricsPool()
 
 	//Создаю метрику PollCount
-	pollCount := mtrx.NewMetric()
+	pollCount := core.NewMetric()
 	if err := pollCount.SetID("PollCount"); err != nil {
 		return nil, err
 	}
@@ -183,13 +186,16 @@ func mtrxMotion(c int64, cms *runtime.MemStats) (*mtrx.MetricsPool, error) {
 	if err := pollCount.SetValue(c); err != nil {
 		return nil, err
 	}
-	if !mtrxPool.Add(pollCount.ID, *pollCount) {
+	if err := pollCount.SetHash(cfg.Key); err != nil {
+		return nil, err
+	}
+	if err := mtrxPool.Create(pollCount.ID, *pollCount); err != nil {
 		return nil, errors.New("unable add PollCount mtrx into MetricsPool: " + pollCount.GetID() + pollCount.GetType())
 	}
 	//Создаю метрику RandomValue
 	rand.Seed(time.Now().UTC().UnixNano())
 
-	randomValue := mtrx.NewMetric()
+	randomValue := core.NewMetric()
 	if err := randomValue.SetID("RandomValue"); err != nil {
 		return nil, err
 	}
@@ -199,9 +205,11 @@ func mtrxMotion(c int64, cms *runtime.MemStats) (*mtrx.MetricsPool, error) {
 	if err := randomValue.SetValue(rand.Float64()); err != nil {
 		return nil, err
 	}
-
-	if !mtrxPool.Add(randomValue.ID, *randomValue) {
-		return nil, errors.New("unable add PollCount mtrx into MetricsPool: " + randomValue.GetID() + randomValue.GetType())
+	if err := randomValue.SetHash(cfg.Key); err != nil {
+		return nil, err
+	}
+	if err := mtrxPool.Create(randomValue.ID, *randomValue); err != nil {
+		return nil, errors.New("unable add randomValue mtrx into MetricsPool: " + randomValue.GetID() + randomValue.GetType())
 	}
 
 	//Создаю метрики из пакета runtime / у cms тип runtime.MemStats
@@ -212,7 +220,7 @@ func mtrxMotion(c int64, cms *runtime.MemStats) (*mtrx.MetricsPool, error) {
 		id := val.Type().Field(i).Name                             //достаю имя поля
 		v := fmt.Sprint(val.FieldByName(val.Type().Field(i).Name)) // значение в этом поле
 
-		m := mtrx.NewMetric()               // создаю свою метрику
+		m := core.NewMetric()               // создаю свою метрику
 		if err := m.SetID(id); err != nil { // у обьекта метрики определены методы, через которые заполняются поля имя метрики значение и тип
 			return nil, err
 		}
@@ -222,7 +230,10 @@ func mtrxMotion(c int64, cms *runtime.MemStats) (*mtrx.MetricsPool, error) {
 		if err := m.SetValue(v); err != nil {
 			continue
 		}
-		if !mtrxPool.Add(m.ID, *m) { // Метрика добавляется в общий пул (мапку)
+		if err := m.SetHash(cfg.Key); err != nil {
+			return nil, err
+		}
+		if err := mtrxPool.Create(m.ID, *m); err != nil { // Метрика добавляется в общий пул (мапку)
 			return nil, errors.New("unable add runtime mtrx into MetricsPool: " + m.GetID() + "  " + m.GetType())
 		}
 	}
