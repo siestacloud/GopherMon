@@ -15,7 +15,6 @@ import (
 	"github.com/siestacloud/service-monitoring/internal/server/transport/rest"
 	"github.com/siestacloud/service-monitoring/internal/server/transport/rest/handler"
 	"github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 )
 
 var (
@@ -28,14 +27,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	db, err := repository.NewPostgresDB(repository.Config{
-		Host:     viper.GetString("db.host"),
-		Port:     viper.GetString("db.port"),
-		Username: viper.GetString("db.username"),
-		DBName:   viper.GetString("db.dbname"),
-		SSLMode:  viper.GetString("db.sslmode"),
-		Password: os.Getenv("DB_PASSWORD"),
-	})
+	db, err := repository.NewPostgresDB(cfg.PostgresDB.UrlDB)
 
 	if err != nil {
 		logrus.Fatalf("failed to initialize db: %s", err.Error())
