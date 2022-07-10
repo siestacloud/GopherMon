@@ -110,6 +110,6 @@ func (s *Server) cfgRouter() {
 	s.e.POST("/update/", s.h.UpdateJSON())
 	s.e.POST("/value/", s.h.ShowMetricJSON())
 	s.e.GET("/", s.h.ShowAllMetrics())
-	s.e.GET("/ping", s.h.CheckDb())
+	s.e.GET("/ping", s.h.CheckDB())
 
 }

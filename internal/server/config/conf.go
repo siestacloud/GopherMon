@@ -11,10 +11,8 @@ type Server struct {
 	Logrus struct {
 		LogLevel string `env:"LOGSLEVEL" mapstructure:"level"` // info,debug
 		JSON     string `env:"JSONLOGS" mapstructure:"json"`   // log format in json
-	} `mapstructure:"logrus"`
-	PostgresDB struct {
-		UrlDB string `env:"DATABASE_DSN" mapstructure:"urldb"`
-	} `mapstructure:"postgresdb"`
+	}
+	UrlPostgres   string        `env:"DATABASE_DSN" mapstructure:"database-dsn"`
 	Address       string        `env:"ADDRESS" mapstructure:"address"` // address+port for server
 	Restore       bool          `env:"RESTORE" mapstructure:"restore"` //
 	StoreInterval time.Duration `env:"STORE_INTERVAL" mapstructure:"storeinterval"`

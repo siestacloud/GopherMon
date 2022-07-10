@@ -27,8 +27,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	db, err := repository.NewPostgresDB(cfg.PostgresDB.UrlDB)
-
+	db, err := repository.NewPostgresDB(cfg.UrlPostgres)
 	if err != nil {
 		logrus.Fatalf("failed to initialize db: %s", err.Error())
 	}

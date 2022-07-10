@@ -211,7 +211,7 @@ func (h *Handler) ShowMetricJSON() echo.HandlerFunc {
 // }
 
 // GET /ping
-func (h *Handler) CheckDb() echo.HandlerFunc {
+func (h *Handler) CheckDB() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		infoPrint("in tune", "request: "+h.cfg.Address+c.Request().URL.String())
 		defer c.Request().Body.Close()
