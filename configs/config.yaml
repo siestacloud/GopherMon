@@ -1,8 +1,8 @@
 server:
   logrus: 
     json: false
-    level: debug
-  database-dsn: "postgres://postgres:qwerty@localhost:5432/postgres?sslmode=disable"
+    level: info
+  database-dsn: ""
   address: "localhost:9999"
   restore: true
   storeinterval: 15s
