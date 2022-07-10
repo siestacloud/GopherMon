@@ -2,6 +2,8 @@ server:
   logrus: 
     json: false
     level: info
+  postgresdb:
+    urldb: "postgres://postgres:qwerty@localhost:5432/postgres?sslmode=disable"
   address: "localhost:9999"
   restore: true
   storeinterval: 15s

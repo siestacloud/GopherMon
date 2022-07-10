@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"github.com/jmoiron/sqlx"
 	"github.com/siestacloud/service-monitoring/internal/core"
 )
 
@@ -15,14 +16,21 @@ type RAM interface {
 	WriteLocalStorage(fn string) error
 }
 
+// Интерфейс для взаимодействия с метриками, хранящимися в postgres
+type DB interface {
+	TestDB() error
+}
+
 // Главный тип слоя repository, который встраивается как зависимость в слое SVC
 type Repository struct {
 	RAM
+	DB
 }
 
 //Конструктор слоя repository
-func NewRepository(mp *core.MetricsPool) *Repository {
+func NewRepository(mp *core.MetricsPool, db *sqlx.DB) *Repository {
 	return &Repository{
 		RAM: newRAMStorage(mp),
+		DB:  newDBPostgres(db),
 	}
 }

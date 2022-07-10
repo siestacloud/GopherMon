@@ -29,6 +29,8 @@ func Parse(cfg *Cfg) error {
 	flag.StringVar(&cfg.Address, "a", "localhost:8080", "Address for server. Possible values: localhost:8080")
 	flag.BoolVar(&cfg.Restore, "r", true, "Restore metrics pool. Possible values: true false")
 	flag.StringVar(&cfg.Key, "k", "", "key for data sign. Possible values: 123qwe123")
+	flag.StringVar(&cfg.PostgresDB.UrlDB, "d", "", "url for postgres db con. Possible values: url")
+
 	flag.Parse()
 
 	// Читаю переменные окружения, переопределяю параметры, если пер окр заданы

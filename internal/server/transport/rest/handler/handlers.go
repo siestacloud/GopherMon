@@ -209,3 +209,18 @@ func (h *Handler) ShowMetricJSON() echo.HandlerFunc {
 // 			log.Println("Unable decode JSON", err)
 // 			return c.HTML(http.StatusBadRequest, "")
 // }
+
+// GET /ping
+func (h *Handler) CheckDb() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		infoPrint("in tune", "request: "+h.cfg.Address+c.Request().URL.String())
+		defer c.Request().Body.Close()
+
+		if err := h.services.DB.TestDB(); err != nil {
+			return errResponse(c, http.StatusInternalServerError, "postgres db fail connect")
+		}
+
+		infoPrint("200", "request: "+h.cfg.Address+c.Request().URL.String())
+		return c.JSON(http.StatusOK, statusResponse{"ok"})
+	}
+}

@@ -7,6 +7,7 @@ import (
 	"os"
 	"time"
 
+	_ "github.com/lib/pq"
 	"github.com/siestacloud/service-monitoring/internal/core"
 	"github.com/siestacloud/service-monitoring/internal/server/config"
 	"github.com/siestacloud/service-monitoring/internal/server/repository"
@@ -14,6 +15,7 @@ import (
 	"github.com/siestacloud/service-monitoring/internal/server/transport/rest"
 	"github.com/siestacloud/service-monitoring/internal/server/transport/rest/handler"
 	"github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 )
 
 var (
@@ -25,8 +27,22 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	db, err := repository.NewPostgresDB(repository.Config{
+		Host:     viper.GetString("db.host"),
+		Port:     viper.GetString("db.port"),
+		Username: viper.GetString("db.username"),
+		DBName:   viper.GetString("db.dbname"),
+		SSLMode:  viper.GetString("db.sslmode"),
+		Password: os.Getenv("DB_PASSWORD"),
+	})
+
+	if err != nil {
+		logrus.Fatalf("failed to initialize db: %s", err.Error())
+	}
+
 	mp := core.NewMetricsPool()
-	repos := repository.NewRepository(mp)
+	repos := repository.NewRepository(mp, db)
 	services := service.NewService(repos)
 	handlers := handler.NewHandler(&cfg, services)
 	s, err := rest.NewServer(&cfg, handlers)
