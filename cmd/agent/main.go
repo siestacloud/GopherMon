@@ -30,6 +30,7 @@ func main() {
 		log.Fatal(err)
 	}
 	json.Unmarshal(data, config)
+	config = agent.EnvConfig()
 	agent := agent.New(config)
 	err = agent.Start(ctx)
 	if err != nil {
