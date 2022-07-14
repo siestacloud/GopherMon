@@ -6,7 +6,7 @@ import (
 )
 
 const (
-// usersTable      = "users"
+// mtrxTable = "mtrx"
 // todoListsTable  = "todo_lists"
 // usersListsTable = "users_lists"
 // todoItemsTable  = "todo_items"
@@ -27,13 +27,3 @@ func NewPostgresDB(urlDB string) (*sqlx.DB, error) {
 }
 
 // "postgres://postgres:qwerty@localhost:5432/postgres?sslmode=disable"
-
-
-CREATE TABLE mtrx
-(
-    id      serial       not null unique,
-    name    varchar(255) not null unique,
-    type 	varchar(255) not null unique,
-	value   varchar(255) not null unique,
-    delta	varchar(255) not null
-);
