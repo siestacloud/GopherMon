@@ -29,7 +29,7 @@ func main() {
 
 	// if cfg.UrlPostgres != "" {
 
-	db, err := repository.NewPostgresDB(cfg.UrlPostgres)
+	db, err := repository.NewPostgresDB(cfg.URLPostgres)
 	if err != nil {
 		logrus.Warnf("failed to initialize db: %s", err.Error())
 	}

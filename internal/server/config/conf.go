@@ -12,7 +12,7 @@ type Server struct {
 		LogLevel string `env:"LOGSLEVEL" mapstructure:"level"` // info,debug
 		JSON     string `env:"JSONLOGS" mapstructure:"json"`   // log format in json
 	}
-	UrlPostgres   string        `env:"DATABASE_DSN" mapstructure:"database-dsn"`
+	URLPostgres   string        `env:"DATABASE_DSN" mapstructure:"database-dsn"`
 	Address       string        `env:"ADDRESS" mapstructure:"address"` // address+port for server
 	Restore       bool          `env:"RESTORE" mapstructure:"restore"` //
 	StoreInterval time.Duration `env:"STORE_INTERVAL" mapstructure:"storeinterval"`
