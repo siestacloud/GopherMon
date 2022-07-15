@@ -47,37 +47,41 @@ func (m *MetricsPool) Create(key string, mtrx Metric) error {
 
 //Обновить метрику в пуле
 func (m *MetricsPool) Update(key string, mtrx Metric) error {
+
 	if key == "" {
 		return errors.New("unable update mtrx: empty key")
 	}
-	switch mtrx.GetType() { //Определяю тип новой метрики
-	// значение у нов метрики с типом счетчик не заменяет значение в базе а добавляется к нему.
-	case "counter":
-		dmtrx := m.LookUP(key) // ищу метрику по ключу
-		if dmtrx == nil {
-			break // метрики нету выход
-		}
-
-		d, err := dmtrx.GetDelta() // получаю значение метрики из базы
-		if err != nil {
-			return err
-		}
-
-		dm, err := mtrx.GetDelta() // получаю значение новой метрики
-		if err != nil {
-			return err
-		}
-		// суммирую значение
-		val := d + dm
-		// сохраняю в базе
-		err = mtrx.SetValue(val)
-		if err != nil {
-			return err
-		}
+	dmtrx := m.LookUP(key) // ищу метрику по ключу
+	if dmtrx == nil {
+		m.M[key] = mtrx // добавляю ее по ключу
+		return nil
 	}
-	m.M[key] = mtrx // добавляю ее по ключу
 
-	return nil //доб новую метрику в мапку
+	if mtrx.GetType() == dmtrx.GetType() {
+		if mtrx.GetType() == "counter" {
+			d, err := dmtrx.GetDelta() // получаю значение метрики из базы
+			if err != nil {
+				return err
+			}
+
+			dm, err := mtrx.GetDelta() // получаю значение новой метрики
+			if err != nil {
+				return err
+			}
+			// суммирую значение
+			val := d + dm
+			// сохраняю в базе
+			err = mtrx.SetValue(val)
+			if err != nil {
+				return err
+			}
+		}
+
+		m.M[key] = mtrx // добавляю ее по ключу
+		return nil
+	}
+
+	return errors.New("mtrx in db have another type. drop this mtrx") //доб новую метрику в мапку
 }
 
 //Удалить метрику из пула

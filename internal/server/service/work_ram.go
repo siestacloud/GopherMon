@@ -56,16 +56,8 @@ func (r *RAMService) Add(key string, mtrx *core.Metric) error {
 	if err != nil {
 		logrus.Warn("unable find and update metric in storage: ", err)
 		logrus.Warn("try add new metric")
+		return err
 	}
-
-	// err = r.repo.Create(key, mtrx)
-	// if err != nil {
-	// 	logrus.Error("unable create metric in storage")
-	// 	return err
-	// }
-
-	// return c.HTML(http.StatusBadRequest, "")
-	// r.repo.PrintMtrxs()
 	return nil
 }
 
