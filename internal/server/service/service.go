@@ -17,20 +17,24 @@ type RAM interface {
 	CheckHash(key string, mtrx *core.Metric) error
 }
 
-type DB interface {
+type MtrxList interface {
 	TestDB() error
+	Create(mtrx *core.Metric) (int, error)
+	Get(name, mtype string) (*core.Metric, error)
+	Update(mtrx *core.Metric) (int, error)
+	Add(mtrx *core.Metric) (int, error)
 }
 
 // Главный тип слоя SVC, который встраивается как зависимость в слое TRANSPORT
 type Service struct {
 	RAM
-	DB
+	MtrxList
 }
 
 // Конструктор слоя SVC
 func NewService(repos *repository.Repository) *Service {
 	return &Service{
-		RAM: newRAMService(repos.RAM),
-		DB:  newDBService(repos.DB),
+		RAM:      newRAMService(repos.RAM),
+		MtrxList: NewMtrxListService(repos.MtrxList),
 	}
 }

@@ -17,20 +17,23 @@ type RAM interface {
 }
 
 // Интерфейс для взаимодействия с метриками, хранящимися в postgres
-type DB interface {
+type MtrxList interface {
 	TestDB() error
+	Create(mtrx *core.Metric) (int, error)
+	Get(name, mtype string) (*core.Metric, error)
+	Update(mtrx *core.Metric) (int, error)
 }
 
 // Главный тип слоя repository, который встраивается как зависимость в слое SVC
 type Repository struct {
 	RAM
-	DB
+	MtrxList
 }
 
 //Конструктор слоя repository
 func NewRepository(mp *core.MetricsPool, db *sqlx.DB) *Repository {
 	return &Repository{
-		RAM: newRAMStorage(mp),
-		DB:  newDBPostgres(db),
+		RAM:      newRAMStorage(mp),
+		MtrxList: NewMtrxListPostgres(db),
 	}
 }
