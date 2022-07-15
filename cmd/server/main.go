@@ -7,6 +7,7 @@ import (
 	"os"
 	"time"
 
+	_ "github.com/lib/pq"
 	"github.com/siestacloud/service-monitoring/internal/core"
 	"github.com/siestacloud/service-monitoring/internal/server/config"
 	"github.com/siestacloud/service-monitoring/internal/server/repository"
@@ -25,8 +26,16 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	// if cfg.UrlPostgres != "" {
+
+	db, err := repository.NewPostgresDB(cfg.URLPostgres)
+	if err != nil {
+		logrus.Warnf("failed to initialize db: %s", err.Error())
+	}
+
 	mp := core.NewMetricsPool()
-	repos := repository.NewRepository(mp)
+	repos := repository.NewRepository(mp, db)
 	services := service.NewService(repos)
 	handlers := handler.NewHandler(&cfg, services)
 	s, err := rest.NewServer(&cfg, handlers)

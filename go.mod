@@ -5,7 +5,9 @@ go 1.18
 require (
 	github.com/caarlos0/env/v6 v6.9.1
 	github.com/go-resty/resty/v2 v2.7.0
+	github.com/jmoiron/sqlx v1.3.5
 	github.com/labstack/echo/v4 v4.7.2
+	github.com/lib/pq v1.2.0
 	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/viper v1.11.0
 	github.com/stretchr/testify v1.7.1

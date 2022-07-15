@@ -21,3 +21,6 @@ func errResponse(c echo.Context, statusCode int, message string) error {
 func infoPrint(status, message string) {
 	logrus.WithFields(logrus.Fields{"layer": "transport", "status": status}).Info(message)
 }
+func errPrint(status, message string, err error) {
+	logrus.WithFields(logrus.Fields{"layer": "transport", "status": status, "error": err}).Error(message)
+}

@@ -2,6 +2,7 @@ server:
   logrus: 
     json: false
     level: info
+  database-dsn: ""
   address: "localhost:9999"
   restore: true
   storeinterval: 15s
@@ -10,4 +11,4 @@ server:
     server: 10s
     read: 15s
     write: 10s
-    idle: 5s
+    idle: 6s

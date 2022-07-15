@@ -49,10 +49,15 @@ func (h *Handler) UpdateParam() echo.HandlerFunc {
 		if err := mtrx.SetValue(v); err != nil {
 			return errResponse(c, http.StatusBadRequest, "invalid mtrx type: "+err.Error())
 		}
-		err := h.services.Add(n, mtrx)
+		err := h.services.RAM.Add(n, mtrx)
 		if err != nil {
 			return errResponse(c, http.StatusBadRequest, "invalid mtrx type: "+err.Error())
 		}
+
+		// id, err := h.services.MtrxList.Add(mtrx)
+		// if err != nil {
+		// 	errPrint("in tune", "request: "+h.cfg.Address+c.Request().URL.String(), err)
+		// }
 
 		if h.cfg.StoreFile != "" { //Если не указан путь до файла метрика не сохранится на диск
 			if h.cfg.StoreInterval == 0 { //Если интервал сохранения равен нулю, новая метрика незамедлительно сохранится на диск
@@ -62,7 +67,7 @@ func (h *Handler) UpdateParam() echo.HandlerFunc {
 			}
 		}
 		infoPrint("send client Ok", "request: "+h.cfg.Address+c.Request().URL.String())
-		return c.JSON(http.StatusOK, statusResponse{"ok"})
+		return c.JSON(http.StatusOK, statusResponse{"strconv.Itoa(id)"})
 	}
 }
 
@@ -92,7 +97,7 @@ func (h *Handler) UpdateJSON() echo.HandlerFunc {
 		}
 		infoPrint("in tune", "	success compared hash")
 
-		err = h.services.Add(mtrx.GetID(), mtrx)
+		err = h.services.RAM.Add(mtrx.GetID(), mtrx)
 		if err != nil {
 			return errResponse(c, http.StatusBadRequest, "unable read data from body request: "+err.Error())
 		}
@@ -190,10 +195,13 @@ func (h *Handler) ShowMetricJSON() echo.HandlerFunc {
 		}
 		infoPrint("in tune", fmt.Sprintf("	mtrx in db: %+v", mtrx))
 
-		sMtrx.SetHash(h.cfg.Key)
+		err := sMtrx.SetHash(h.cfg.Key)
+		if err != nil {
+			return errResponse(c, http.StatusNotFound, "unable set hash")
 
+		}
 		var buf bytes.Buffer
-		err := sMtrx.MarshalMetricsinJSON(&buf)
+		err = sMtrx.MarshalMetricsinJSON(&buf)
 		if err != nil {
 			return errResponse(c, http.StatusInternalServerError, "unable convert mtrx to json format before send"+err.Error())
 		}
@@ -209,3 +217,18 @@ func (h *Handler) ShowMetricJSON() echo.HandlerFunc {
 // 			log.Println("Unable decode JSON", err)
 // 			return c.HTML(http.StatusBadRequest, "")
 // }
+
+// GET /ping
+func (h *Handler) CheckDB() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		infoPrint("in tune", "request: "+h.cfg.Address+c.Request().URL.String())
+		defer c.Request().Body.Close()
+
+		if err := h.services.MtrxList.TestDB(); err != nil {
+			return errResponse(c, http.StatusInternalServerError, "postgres db fail connect")
+		}
+
+		infoPrint("200", "request: "+h.cfg.Address+c.Request().URL.String())
+		return c.JSON(http.StatusOK, statusResponse{"ok"})
+	}
+}
