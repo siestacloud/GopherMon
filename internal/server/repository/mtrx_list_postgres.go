@@ -29,11 +29,14 @@ func (m *MtrxListPostgres) TestDB() error {
 	return m.db.PingContext(ctx)
 }
 
-func (r *MtrxListPostgres) Create(mtrx *core.Metric) (int, error) {
+func (m *MtrxListPostgres) Create(mtrx *core.Metric) (int, error) {
+	if m.db == nil {
+		return 0, errors.New("database are not connected")
+	}
 
 	var mtrxId int
 	createItemQuery := fmt.Sprintf("INSERT INTO %s (name, type, value, delta) values ($1, $2,$3,$4) RETURNING id", mtrxTable)
-	row := r.db.QueryRow(createItemQuery, mtrx.GetID(), mtrx.GetType(), mtrx.Value, mtrx.Delta)
+	row := m.db.QueryRow(createItemQuery, mtrx.GetID(), mtrx.GetType(), mtrx.Value, mtrx.Delta)
 	err := row.Scan(&mtrxId)
 	if err != nil {
 		return 0, err
@@ -42,23 +45,41 @@ func (r *MtrxListPostgres) Create(mtrx *core.Metric) (int, error) {
 }
 
 // GetByNameType Получаю метрику из базы по имени и типу
-func (m *MtrxListPostgres) Get(name, mtype string) (*core.Metric, error) {
+func (m *MtrxListPostgres) Get(name string) (*core.Metric, error) {
+	if m.db == nil {
+		return nil, errors.New("database are not connected")
+	}
 	var dbMtrx core.Metric
-	query := fmt.Sprintf(`SELECT name, type, value, delta FROM %s  WHERE name = $1 AND type = $2`,
+	query := fmt.Sprintf(`SELECT name, type, value, delta FROM %s  WHERE name = $1`,
 		mtrxTable)
-	if err := m.db.Get(&dbMtrx, query, name, mtype); err != nil {
+	if err := m.db.Get(&dbMtrx, query, name); err != nil {
 		return nil, err
 	}
 	return &dbMtrx, nil
 }
 
-func (r *MtrxListPostgres) Update(mtrx *core.Metric) (int, error) {
-	var mtrxId int
-	createItemQuery := fmt.Sprintf("UPDATE %s SET value=%d, delta=%d WHERE name = '%s', type = '%s' ", mtrxTable, mtrx.Value, mtrx.Delta, mtrx.GetID(), mtrx.GetType())
-	row := r.db.QueryRow(createItemQuery)
-	err := row.Scan(&mtrxId)
-	if err != nil {
-		return 0, err
+func (m *MtrxListPostgres) Update(mtrx *core.Metric) (int, error) {
+	if m.db == nil {
+		return 0, errors.New("database are not connected")
 	}
-	return mtrxId, nil
+	var createItemQuery string
+
+	if mtrx.GetType() == "counter" {
+		mtrxVal, err := mtrx.GetDelta()
+		if err != nil {
+			return 0, err
+		}
+		createItemQuery = fmt.Sprintf("UPDATE %s SET delta = %v WHERE name = '%s' AND type = '%s' ", mtrxTable, mtrxVal, mtrx.GetID(), mtrx.GetType())
+
+	} else {
+		mtrxVal, err := mtrx.GetValue()
+		if err != nil {
+			return 0, err
+		}
+		createItemQuery = fmt.Sprintf("UPDATE %s SET value = %v WHERE name = '%s' AND type = '%s' ", mtrxTable, mtrxVal, mtrx.GetID(), mtrx.GetType())
+
+	}
+
+	_, err := m.db.Exec(createItemQuery)
+	return 1, err
 }

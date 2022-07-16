@@ -29,7 +29,6 @@ func NewHandler(cfg *config.Cfg, services *service.Service) *Handler {
 
 //Update POST update/:type/:name/:value
 func (h *Handler) UpdateParam() echo.HandlerFunc {
-
 	return func(c echo.Context) error {
 		infoPrint("in tune", "request: "+h.cfg.Address+c.Request().URL.String())
 		defer c.Request().Body.Close()
@@ -49,15 +48,20 @@ func (h *Handler) UpdateParam() echo.HandlerFunc {
 		if err := mtrx.SetValue(v); err != nil {
 			return errResponse(c, http.StatusBadRequest, "invalid mtrx type: "+err.Error())
 		}
+		if h.cfg.URLPostgres != "" {
+			_, err := h.services.MtrxList.Add(mtrx)
+			if err != nil {
+				return errResponse(c, http.StatusBadRequest, "invalid mtrx type: "+err.Error())
+				// errPrint("in tune", "request: "+h.cfg.Address+c.Request().URL.String(), err)
+			}
+			infoPrint("send client Ok", "request: "+h.cfg.Address+c.Request().URL.String())
+			return c.JSON(http.StatusOK, statusResponse{"mtrx save in postgres db"})
+		}
+
 		err := h.services.RAM.Add(n, mtrx)
 		if err != nil {
 			return errResponse(c, http.StatusBadRequest, "invalid mtrx type: "+err.Error())
 		}
-
-		// id, err := h.services.MtrxList.Add(mtrx)
-		// if err != nil {
-		// 	errPrint("in tune", "request: "+h.cfg.Address+c.Request().URL.String(), err)
-		// }
 
 		if h.cfg.StoreFile != "" { //Если не указан путь до файла метрика не сохранится на диск
 			if h.cfg.StoreInterval == 0 { //Если интервал сохранения равен нулю, новая метрика незамедлительно сохранится на диск
@@ -66,8 +70,9 @@ func (h *Handler) UpdateParam() echo.HandlerFunc {
 				}
 			}
 		}
+
 		infoPrint("send client Ok", "request: "+h.cfg.Address+c.Request().URL.String())
-		return c.JSON(http.StatusOK, statusResponse{"strconv.Itoa(id)"})
+		return c.JSON(http.StatusOK, statusResponse{"mtrx save"})
 	}
 }
 
@@ -97,6 +102,16 @@ func (h *Handler) UpdateJSON() echo.HandlerFunc {
 		}
 		infoPrint("in tune", "	success compared hash")
 
+		if h.cfg.URLPostgres != "" {
+			_, err := h.services.MtrxList.Add(mtrx)
+			if err != nil {
+				return errResponse(c, http.StatusBadRequest, "invalid mtrx type: "+err.Error())
+				// errPrint("in tune", "request: "+h.cfg.Address+c.Request().URL.String(), err)
+			}
+			infoPrint("send client Ok", "request: "+h.cfg.Address+c.Request().URL.String())
+			return c.JSON(http.StatusOK, statusResponse{"mtrx save in postgres db"})
+		}
+
 		err = h.services.RAM.Add(mtrx.GetID(), mtrx)
 		if err != nil {
 			return errResponse(c, http.StatusBadRequest, "unable read data from body request: "+err.Error())
@@ -124,17 +139,28 @@ func (h *Handler) ShowMetric() echo.HandlerFunc {
 		t := c.Param("type")
 		n := c.Param("name")
 
+		var err error
 		mtrx := core.NewMetric()
+		sMtrx := core.NewMetric()
 		if err := mtrx.SetID(n); err != nil {
 			return errResponse(c, http.StatusNotImplemented, "invalid mtrx name: "+err.Error())
 		}
 		if err := mtrx.SetType(t); err != nil {
 			return errResponse(c, http.StatusNotImplemented, "invalid mtrx type: "+err.Error())
 		}
-		sMtrx := h.services.LookUP(mtrx.GetID())
-		if sMtrx == nil {
-			return errResponse(c, http.StatusNotFound, "mtrx not found in db")
+
+		if h.cfg.URLPostgres != "" {
+			sMtrx, err = h.services.MtrxList.Get(mtrx.GetID())
+			if err != nil {
+				return errResponse(c, http.StatusNotFound, "mtrx not found in postges")
+			}
+		} else {
+			sMtrx = h.services.LookUP(mtrx.GetID())
+			if sMtrx == nil {
+				return errResponse(c, http.StatusNotFound, "mtrx not found")
+			}
 		}
+
 		if mtrx.GetType() != sMtrx.MType {
 			return errResponse(c, http.StatusNotFound, "mtrx found but types not equal")
 		}
@@ -149,7 +175,7 @@ func (h *Handler) ShowMetric() echo.HandlerFunc {
 		}
 		v, err := sMtrx.GetValue()
 		if err != nil {
-			return errResponse(c, http.StatusNotFound, "mtrx from storage has empty value"+err.Error())
+			return errResponse(c, http.StatusNotFound, "mtrx from storage has empty value "+err.Error())
 		}
 		infoPrint("200", "request: "+h.cfg.Address+c.Request().URL.String())
 		return c.HTML(http.StatusOK, fmt.Sprintf("%v", v))
@@ -163,7 +189,7 @@ func (h *Handler) ShowAllMetrics() echo.HandlerFunc {
 		defer c.Request().Body.Close()
 		mp, err := h.services.GetAlljson()
 		if err != nil || mp == nil {
-			return errResponse(c, http.StatusNotFound, "mtrx from storage has empty value"+err.Error())
+			return errResponse(c, http.StatusNotFound, "mtrx pool empty "+err.Error())
 		}
 		infoPrint("200", "request: "+h.cfg.Address+c.Request().URL.String())
 		return c.HTML(http.StatusOK, string(mp))
@@ -178,10 +204,12 @@ func (h *Handler) ShowMetricJSON() echo.HandlerFunc {
 		infoPrint("in tune", "request: "+h.cfg.Address+c.Request().URL.String())
 		defer c.Request().Body.Close()
 
+		var err error
+		mtrx := core.NewMetric()
+		sMtrx := core.NewMetric()
 		// message, _ := bytes.ReadAll(c.Request().Body)
 		// s.l.Info(string(message))
 
-		mtrx := core.NewMetric() // Промежуточный обьект, поля которого будут проверены
 		if err := json.NewDecoder(c.Request().Body).Decode(&mtrx); err != nil {
 			return errResponse(c, http.StatusNotFound, "unable decode mtrx"+err.Error())
 		}
@@ -189,13 +217,20 @@ func (h *Handler) ShowMetricJSON() echo.HandlerFunc {
 		infoPrint("in tune", fmt.Sprintf("	mtrx in request: %+v", mtrx))
 
 		//Произвожу поиск метрики в базе
-		sMtrx := h.services.LookUP(mtrx.GetID())
-		if sMtrx == nil {
-			return errResponse(c, http.StatusNotFound, "unable find mtrx in db")
+		if h.cfg.URLPostgres != "" {
+			sMtrx, err = h.services.MtrxList.Get(mtrx.GetID())
+			if err != nil {
+				return errResponse(c, http.StatusNotFound, "mtrx not found in postges")
+			}
+		} else {
+			sMtrx = h.services.LookUP(mtrx.GetID())
+			if sMtrx == nil {
+				return errResponse(c, http.StatusNotFound, "mtrx not found")
+			}
 		}
 		infoPrint("in tune", fmt.Sprintf("	mtrx in db: %+v", mtrx))
 
-		err := sMtrx.SetHash(h.cfg.Key)
+		err = sMtrx.SetHash(h.cfg.Key)
 		if err != nil {
 			return errResponse(c, http.StatusNotFound, "unable set hash")
 

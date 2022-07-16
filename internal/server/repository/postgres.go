@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"errors"
 	"log"
 
 	"github.com/jmoiron/sqlx"
@@ -17,6 +18,9 @@ const (
 )
 
 func NewPostgresDB(urlDB string) (*sqlx.DB, error) {
+	if urlDB == "" {
+		return nil, errors.New("url not set")
+	}
 	db, err := sqlx.Open("postgres", urlDB)
 	if err != nil {
 		return nil, err
@@ -26,7 +30,6 @@ func NewPostgresDB(urlDB string) (*sqlx.DB, error) {
 		return nil, err
 	}
 	logrus.Info("Success connect to postgres.")
-	logrus.Info("Try create mtrx db...")
 
 	// делаем запрос
 	var checkExist bool
@@ -42,6 +45,8 @@ func NewPostgresDB(urlDB string) (*sqlx.DB, error) {
 		}
 		logrus.Info("Table mtrx successful create")
 
+	} else {
+		logrus.Info("Table mtrx already created")
 	}
 
 	return db, nil
