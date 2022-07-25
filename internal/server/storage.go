@@ -3,6 +3,7 @@ package server
 import (
 	"errors"
 	"strconv"
+	"strings"
 	"sync"
 
 	"github.com/MustCo/Mon_go/internal/utils"
@@ -91,9 +92,11 @@ func (db *DB) Get(t, name string) (*utils.Metrics, error) {
 	db.mut.Lock()
 	defer db.mut.Unlock()
 	if m, ok := db.Metrics[name]; ok {
-		switch t {
+		switch strings.ToLower(t) {
 		case "gauge", "counter":
-			return m, nil
+			if m.MType == strings.ToLower(t) {
+				return m, nil
+			}
 		default:
 			return nil, errors.New("invalid type")
 		}

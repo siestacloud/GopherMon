@@ -4,12 +4,15 @@ import (
 	"context"
 	"encoding/json"
 	"flag"
+	"fmt"
 	"log"
 	"os"
 	"os/signal"
 	"syscall"
 
 	"github.com/MustCo/Mon_go/internal/agent"
+	"github.com/MustCo/Mon_go/internal/utils"
+	"github.com/caarlos0/env/v6"
 )
 
 var (
@@ -22,7 +25,8 @@ func init() {
 
 func main() {
 	flag.Parse()
-	config := agent.NewConfig()
+	config := utils.NewConfig()
+
 	data, err := os.ReadFile(configPath)
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT)
 	defer cancel()
@@ -30,7 +34,12 @@ func main() {
 		log.Fatal(err)
 	}
 	json.Unmarshal(data, config)
-	config = agent.EnvConfig()
+	if err := env.Parse(config); err != nil {
+		log.Fatal(err)
+	}
+	fmt.Printf("%+v\n", config.Address)
+	fmt.Printf("%+v\n", config.PollInterval)
+	fmt.Printf("%+v\n", config.ReportInterval)
 	agent := agent.New(config)
 	err = agent.Start(ctx)
 	if err != nil {
