@@ -12,15 +12,15 @@ import (
 )
 
 type APIServer struct {
-	config *Config
+	config *utils.Config
+}
+
+func New(config *utils.Config) *APIServer {
+	return &APIServer{config: config}
 }
 
 type UpdateHandler struct {
 	DB Storage
-}
-
-func New(config *Config) *APIServer {
-	return &APIServer{config: config}
 }
 
 func NewUpdateHandler() *UpdateHandler {
@@ -108,6 +108,7 @@ func (handler *UpdateHandler) getJSON(c echo.Context) error {
 	if err != nil {
 		return err
 	}
+	log.Print(m)
 	metrics, err := handler.DB.Get(m.MType, m.ID)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusNotFound, err.Error())
@@ -126,5 +127,5 @@ func (s *APIServer) Start(ctx context.Context) error {
 	e.POST("/update/:type/:name/:value", updater.postMetric)
 	e.POST("/update/", updater.updateJSON)
 	e.POST("/value/", updater.getJSON)
-	return e.Start(s.config.BindAddr)
+	return e.Start(s.config.Address)
 }

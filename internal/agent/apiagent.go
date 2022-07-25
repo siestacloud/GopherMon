@@ -13,11 +13,11 @@ import (
 )
 
 type APIAgent struct {
-	config *Config
+	config *utils.Config
 	client *resty.Client
 }
 
-func New(config *Config) *APIAgent {
+func New(config *utils.Config) *APIAgent {
 	return &APIAgent{config: config}
 }
 
@@ -35,9 +35,10 @@ func (c *APIAgent) sendJSON(m *utils.Metrics) error {
 	resp, err := c.client.R().
 		SetBody(*m).
 		SetPathParams(map[string]string{
-			"host": c.config.ReportAddr,
+			"host": c.config.Address,
 		}).
 		Post("http://{host}/update/")
+	log.Print(*m)
 	if err != nil {
 		return err
 	}

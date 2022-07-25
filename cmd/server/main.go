@@ -2,12 +2,13 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"flag"
+	"fmt"
 	"log"
-	"os"
 
 	"github.com/MustCo/Mon_go/internal/server"
+	"github.com/MustCo/Mon_go/internal/utils"
+	"github.com/caarlos0/env/v6"
 )
 
 var (
@@ -20,14 +21,12 @@ func init() {
 
 func main() {
 	flag.Parse()
-	config := server.NewConfig()
-	data, err := os.ReadFile(configPath)
-	if err != nil {
+	config := utils.NewConfig()
+	ctx := context.TODO()
+	if err := env.Parse(config); err != nil {
 		log.Fatal(err)
 	}
-	json.Unmarshal(data, config)
-	ctx := context.TODO()
-	config = server.EnvConfig()
+	fmt.Printf("%+v\n", config.Address)
 	server := server.New(config)
 	log.Fatal(server.Start(ctx))
 
