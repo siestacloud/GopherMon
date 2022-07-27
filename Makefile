@@ -7,7 +7,5 @@ test:
 	go test -v ./cmd/agent
 	go test -v ./cmd/server
 	go test -v ./internal/agent
-	go test -v ./internal/server
+	go test -v ./internal/server.DEFAULF_GOAL := build
 
-
-.DEFAULF_GOAL := build
