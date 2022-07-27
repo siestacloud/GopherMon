@@ -34,14 +34,14 @@ func (m *MtrxListPostgres) Create(mtrx *core.Metric) (int, error) {
 		return 0, errors.New("database are not connected")
 	}
 
-	var mtrxId int
+	var mtrxID int
 	createItemQuery := fmt.Sprintf("INSERT INTO %s (name, type, value, delta) values ($1, $2,$3,$4) RETURNING id", mtrxTable)
 	row := m.db.QueryRow(createItemQuery, mtrx.GetID(), mtrx.GetType(), mtrx.Value, mtrx.Delta)
-	err := row.Scan(&mtrxId)
+	err := row.Scan(&mtrxID)
 	if err != nil {
 		return 0, err
 	}
-	return mtrxId, nil
+	return mtrxID, nil
 }
 
 // GetByNameType Получаю метрику из базы по имени и типу

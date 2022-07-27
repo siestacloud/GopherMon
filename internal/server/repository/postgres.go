@@ -10,11 +10,6 @@ import (
 
 const (
 	mtrxTable = "mtrx"
-
-// todoListsTable  = "todo_lists"
-// usersListsTable = "users_lists"
-// todoItemsTable  = "todo_items"
-// listsItemsTable = "lists_items"
 )
 
 func NewPostgresDB(urlDB string) (*sqlx.DB, error) {

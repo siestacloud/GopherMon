@@ -48,6 +48,7 @@ func (h *Handler) UpdateParam() echo.HandlerFunc {
 		if err := mtrx.SetValue(v); err != nil {
 			return errResponse(c, http.StatusBadRequest, "invalid mtrx type: "+err.Error())
 		}
+		// При подключенной postgres
 		if h.cfg.URLPostgres != "" {
 			_, err := h.services.MtrxList.Add(mtrx)
 			if err != nil {
@@ -57,12 +58,14 @@ func (h *Handler) UpdateParam() echo.HandlerFunc {
 			infoPrint("send client Ok", "request: "+h.cfg.Address+c.Request().URL.String())
 			return c.JSON(http.StatusOK, statusResponse{"mtrx save in postgres db"})
 		}
-
+		// При отключенной postgres
+		// метрика сохр в оперативной памяти
 		err := h.services.RAM.Add(n, mtrx)
 		if err != nil {
 			return errResponse(c, http.StatusBadRequest, "invalid mtrx type: "+err.Error())
 		}
 
+		// При подключенном local storage
 		if h.cfg.StoreFile != "" { //Если не указан путь до файла метрика не сохранится на диск
 			if h.cfg.StoreInterval == 0 { //Если интервал сохранения равен нулю, новая метрика незамедлительно сохранится на диск
 				if err := h.services.RAM.WriteLocalStorage(h.cfg.StoreFile); err != nil {
@@ -87,36 +90,38 @@ func (h *Handler) UpdateJSON() echo.HandlerFunc {
 			return errResponse(c, http.StatusInternalServerError, "unable read data from body request: "+err.Error())
 		}
 		infoPrint("in tune", "	mtrx in request: "+string(body))
-
 		defer c.Request().Body.Close()
 
+		//Формирую новую метрику из полученного запроса
 		mtrx := core.NewMetric()
 		if err := mtrx.UnmarshalMetricJSON(body); err != nil {
 			return errResponse(c, http.StatusBadRequest, "unable read data from body request: "+err.Error())
 		}
-		infoPrint("in tune", "	success parse in object mtrx")
-
+		// проверяю целостность данных и подпись
 		err = h.services.CheckHash(h.cfg.Key, mtrx)
 		if err != nil {
 			return errResponse(c, http.StatusBadRequest, "unable compare hash: "+err.Error())
 		}
 		infoPrint("in tune", "	success compared hash")
 
+		// При подключенной postgres
 		if h.cfg.URLPostgres != "" {
 			_, err := h.services.MtrxList.Add(mtrx)
 			if err != nil {
 				return errResponse(c, http.StatusBadRequest, "invalid mtrx type: "+err.Error())
-				// errPrint("in tune", "request: "+h.cfg.Address+c.Request().URL.String(), err)
 			}
 			infoPrint("send client Ok", "request: "+h.cfg.Address+c.Request().URL.String())
 			return c.JSON(http.StatusOK, statusResponse{"mtrx save in postgres db"})
 		}
 
+		// При отключенной postgres
+		// метрика сохр в оперативной памяти
 		err = h.services.RAM.Add(mtrx.GetID(), mtrx)
 		if err != nil {
 			return errResponse(c, http.StatusBadRequest, "unable read data from body request: "+err.Error())
 		}
 
+		// При подключенном local storage
 		if h.cfg.StoreFile != "" { //Если не указан путь до файла метрика не сохранится на диск
 			if h.cfg.StoreInterval == 0 { //Если интервал сохранения равен нулю, новая метрика незамедлительно сохранится на диск
 				if err := h.services.RAM.WriteLocalStorage(h.cfg.StoreFile); err != nil {
@@ -135,11 +140,12 @@ func (h *Handler) ShowMetric() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		infoPrint("in tune", "request: "+h.cfg.Address+c.Request().URL.String())
 		defer c.Request().Body.Close()
+		var err error
 
 		t := c.Param("type")
 		n := c.Param("name")
 
-		var err error
+		//Формирую новую метрику из полученного запроса
 		mtrx := core.NewMetric()
 		sMtrx := core.NewMetric()
 		if err := mtrx.SetID(n); err != nil {
@@ -148,13 +154,15 @@ func (h *Handler) ShowMetric() echo.HandlerFunc {
 		if err := mtrx.SetType(t); err != nil {
 			return errResponse(c, http.StatusNotImplemented, "invalid mtrx type: "+err.Error())
 		}
-
+		// При подключенной postgres
 		if h.cfg.URLPostgres != "" {
 			sMtrx, err = h.services.MtrxList.Get(mtrx.GetID())
 			if err != nil {
 				return errResponse(c, http.StatusNotFound, "mtrx not found in postges")
 			}
 		} else {
+			// При отключенной postgres
+			// Ищу метрику в RAM
 			sMtrx = h.services.LookUP(mtrx.GetID())
 			if sMtrx == nil {
 				return errResponse(c, http.StatusNotFound, "mtrx not found")
@@ -205,24 +213,24 @@ func (h *Handler) ShowMetricJSON() echo.HandlerFunc {
 		defer c.Request().Body.Close()
 
 		var err error
+
+		//Формирую новую метрику из полученного запроса
 		mtrx := core.NewMetric()
 		sMtrx := core.NewMetric()
-		// message, _ := bytes.ReadAll(c.Request().Body)
-		// s.l.Info(string(message))
 
 		if err := json.NewDecoder(c.Request().Body).Decode(&mtrx); err != nil {
 			return errResponse(c, http.StatusNotFound, "unable decode mtrx"+err.Error())
 		}
 
-		infoPrint("in tune", fmt.Sprintf("	mtrx in request: %+v", mtrx))
-
-		//Произвожу поиск метрики в базе
+		// При подключенной postgres
 		if h.cfg.URLPostgres != "" {
 			sMtrx, err = h.services.MtrxList.Get(mtrx.GetID())
 			if err != nil {
 				return errResponse(c, http.StatusNotFound, "mtrx not found in postges")
 			}
 		} else {
+			// При отключенной postgres
+			// Ищу метрику в RAM
 			sMtrx = h.services.LookUP(mtrx.GetID())
 			if sMtrx == nil {
 				return errResponse(c, http.StatusNotFound, "mtrx not found")
@@ -230,6 +238,7 @@ func (h *Handler) ShowMetricJSON() echo.HandlerFunc {
 		}
 		infoPrint("in tune", fmt.Sprintf("	mtrx in db: %+v", mtrx))
 
+		// генерирую хеш
 		err = sMtrx.SetHash(h.cfg.Key)
 		if err != nil {
 			return errResponse(c, http.StatusNotFound, "unable set hash")
@@ -244,14 +253,6 @@ func (h *Handler) ShowMetricJSON() echo.HandlerFunc {
 		return c.String(http.StatusOK, buf.String())
 	}
 }
-
-//		message, _ := ioutil.ReadAll(c.Request().Body)
-// 		log.Println("In request body: ", string(message))
-// 		err := json.Unmarshal([]byte(string(message)), &m)
-// 		if err != nil {
-// 			log.Println("Unable decode JSON", err)
-// 			return c.HTML(http.StatusBadRequest, "")
-// }
 
 // GET /ping
 func (h *Handler) CheckDB() echo.HandlerFunc {
