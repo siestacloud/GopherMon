@@ -13,10 +13,18 @@ import (
 
 type APIServer struct {
 	config *utils.Config
+	e      *echo.Echo
 }
 
 func New(config *utils.Config) *APIServer {
-	return &APIServer{config: config}
+	updater := NewUpdateHandler()
+	e := echo.New()
+	e.GET("/", updater.getAllMetrics)
+	e.GET("/value/:type/:name", updater.getMetric)
+	e.POST("/update/:type/:name/:value", updater.postMetric)
+	e.POST("/update/", updater.updateJSON)
+	e.POST("/value/", updater.getJSON)
+	return &APIServer{config: config, e: e}
 }
 
 type UpdateHandler struct {
@@ -120,12 +128,5 @@ func (handler *UpdateHandler) getJSON(c echo.Context) error {
 }
 
 func (s *APIServer) Start(ctx context.Context) error {
-	updater := NewUpdateHandler()
-	e := echo.New()
-	e.GET("/", updater.getAllMetrics)
-	e.GET("/value/:type/:name", updater.getMetric)
-	e.POST("/update/:type/:name/:value", updater.postMetric)
-	e.POST("/update/", updater.updateJSON)
-	e.POST("/value/", updater.getJSON)
-	return e.Start(s.config.Address)
+	return s.e.Start(s.config.Address)
 }
