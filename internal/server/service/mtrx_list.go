@@ -73,3 +73,28 @@ func (m *MtrxListService) Add(mtrx *core.Metric) (int, error) {
 	}
 	return 0, errors.New("mtrx in db have another type. drop this mtrx") //доб новую метрику в мапку
 }
+
+func (m *MtrxListService) Flush(mtrxCase []core.Metric) (int, error) {
+	mtrxCaseOK := []core.Metric{}
+	for _, mtrx := range mtrxCase {
+		if mtrx.GetType() == "counter" {
+			dbMtrx, err := m.repo.Get(mtrx.ID)
+			if err != nil {
+				logrus.Warn("mtrx not exist in postgres: ", err)
+				continue
+			}
+			if mtrx.GetType() == dbMtrx.GetType() {
+				if mtrx.GetType() == "counter" {
+					sumDelta := *mtrx.Delta + *dbMtrx.Delta
+					// сохраняю в базе
+					err = mtrx.SetValue(sumDelta)
+					if err != nil {
+						return 0, err
+					}
+				}
+			}
+		}
+		mtrxCaseOK = append(mtrxCaseOK, mtrx)
+	}
+	return m.repo.Flush(mtrxCaseOK)
+}

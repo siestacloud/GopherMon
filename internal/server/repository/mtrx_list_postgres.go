@@ -9,6 +9,7 @@ import (
 
 	"github.com/jmoiron/sqlx"
 	"github.com/siestacloud/service-monitoring/internal/core"
+	"github.com/sirupsen/logrus"
 )
 
 type MtrxListPostgres struct {
@@ -85,36 +86,71 @@ func (m *MtrxListPostgres) Update(mtrx *core.Metric) (int, error) {
 	return 1, err
 }
 
-func (r *MtrxListPostgres) Flush(mtrx []core.Metric) (int, error) {
+func (r *MtrxListPostgres) Flush(mtrxCase []core.Metric) (int, error) {
 
-	// проверим на всякий случай
+	// на всякий
 	if r.db == nil {
 		return 0, errors.New("You haven`t opened the database connection")
 	}
+
 	tx, err := r.db.Begin()
 	if err != nil {
 		return 0, err
+
 	}
 
-	stmt, err := tx.Prepare("INSERT INTO videos(title, description, views, likes) VALUES(?,?,?,?)")
+	defer tx.Rollback()
+
+	// stmt, err := tx.Prepare("INSERT INTO videos(title, description, views, likes) VALUES(?,?,?,?)")
+	// stmt, err := tx.Prepare(`INSERT INTO mtrx (name, type)
+	//                  VALUES($1,$2);`)
+
+	// готовим инструкцию
+	stmt, err := tx.Prepare(`INSERT INTO mtrx (name, type, value, delta) VALUES ($1, $2, $3, $4) ON CONFLICT (name) DO UPDATE SET type=$2, value = $3, delta = $4;`)
 	if err != nil {
-		return err
+		return 0, err
 	}
+	defer stmt.Close()
 
-	for _, v := range db.buffer {
-		if _, err = stmt.Exec(v.Title, v.Description, v.Views, v.Likes); err != nil {
-			if err = tx.Rollback(); err != nil {
-				log.Fatalf("update drivers: unable to rollback: %v", err)
+	for _, mtrx := range mtrxCase {
+		if mtrx.MType == "gauge" {
+			// указываю, что каждая метрика будет добавлена в транзакцию
+			if _, err = stmt.Exec(
+				// переменная в запросе
+				mtrx.ID,
+				mtrx.MType,
+				*mtrx.Value,
+				nil,
+			); err != nil {
+				if err = tx.Rollback(); err != nil {
+					log.Fatalf("update drivers: unable to rollback: %v", err)
+				}
+				return 0, err
 			}
-			return err
+
+		} else {
+			// указываю, что каждая метрика будет добавлена в транзакцию
+			if _, err = stmt.Exec(
+				// переменная в запросе
+				mtrx.ID,
+				mtrx.MType,
+				nil,
+				*mtrx.Delta,
+			); err != nil {
+				if err = tx.Rollback(); err != nil {
+					log.Fatalf("update drivers: unable to rollback: %v", err)
+				}
+				return 0, err
+			}
 		}
+
 	}
 
+	logrus.Warn("OK")
+	//сохраняем изменения
 	if err := tx.Commit(); err != nil {
 		log.Fatalf("update drivers: unable to commit: %v", err)
 	}
 
-	db.buffer = db.buffer[:0]
-
-	return 0, nil
+	return 1, nil
 }

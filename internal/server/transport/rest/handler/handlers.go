@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
 
 	"github.com/labstack/echo/v4"
 	"github.com/sirupsen/logrus"
@@ -291,7 +292,15 @@ func (h *Handler) MultupleMtrxJSON() echo.HandlerFunc {
 		fmt.Println(string(b))
 
 		infoPrint("in tune", "	success parse in object mtrx")
+		var val int
+		// При подключенной postgres
+		if h.cfg.URLPostgres != "" {
+			val, err = h.services.MtrxList.Flush(mtrxCase)
+			if err != nil {
+				return errResponse(c, http.StatusNotFound, "unable insert or update mrtxs: "+err.Error())
+			}
+		}
 
-		return c.JSON(http.StatusOK, statusResponse{"ok"})
+		return c.JSON(http.StatusOK, statusResponse{strconv.Itoa(val)})
 	}
 }
