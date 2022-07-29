@@ -27,11 +27,9 @@ func main() {
 		log.Fatal(err)
 	}
 
-	// if cfg.UrlPostgres != "" {
-
 	db, err := repository.NewPostgresDB(cfg.URLPostgres)
 	if err != nil {
-		logrus.Warnf("failed to initialize db: %s", err.Error())
+		logrus.Warnf("failed to initialize postrges: %s", err.Error())
 	}
 
 	mp := core.NewMetricsPool()
@@ -43,22 +41,25 @@ func main() {
 		log.Fatal(err)
 	}
 
-	// если в cfg задан путь до файла с mtrx и задан интервал
-	if cfg.StoreFile != "" {
-		if cfg.StoreInterval != 0 {
-			if err := mp.RLS(cfg.StoreFile); err != nil {
-				log.Fatal(err)
-			}
-			// пул будет сохранятся на диск с опр интервалом
-			go func() {
-				for {
-					time.Sleep(cfg.StoreInterval)
-					if err := mp.WLS(cfg.StoreFile); err != nil {
-						logrus.Error("error store interval: ", err)
-					}
-					logrus.Info("Storage update")
+	if cfg.URLPostgres == "" {
+		// если в cfg задан путь до файла с mtrx и задан интервал
+		if cfg.StoreFile != "" {
+			if cfg.StoreInterval != 0 {
+				if err := mp.RLS(cfg.StoreFile); err != nil {
+					log.Fatal(err)
 				}
-			}()
+				logrus.Info("local storage connected")
+				// пул будет сохранятся на диск с опр интервалом
+				go func() {
+					for {
+						time.Sleep(cfg.StoreInterval)
+						if err := mp.WLS(cfg.StoreFile); err != nil {
+							logrus.Error("error store interval: ", err)
+						}
+						logrus.Info("Storage update")
+					}
+				}()
+			}
 		}
 	}
 

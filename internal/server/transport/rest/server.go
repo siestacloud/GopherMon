@@ -41,8 +41,6 @@ func (s *Server) Start() error {
 	}
 	cfgjson, _ := json.MarshalIndent(s.c, "  ", " ")
 	logrus.Info(string(cfgjson))
-	// var err error
-	// Set up a channel to listen to for interrupt signals.
 	var runChan = make(chan os.Signal, 1)
 
 	// Handle ctrl+c/ctrl+x interrupt
@@ -69,16 +67,12 @@ func (s *Server) Start() error {
 
 	// Block on this let know, why the server is shutting down
 	interrupt := <-runChan
-
-	// If we get one of the pre-prescribed syscalls, gracefully terminate the server
-	// while alerting the user
 	logrus.Infof("Server is shutting down due to %+v\n", interrupt)
 
 	if err := server.Shutdown(ctx); err != nil {
 		return err
 	}
 	logrus.Info("Server was gracefully shutdown")
-
 	return nil
 }
 
@@ -92,7 +86,6 @@ func (s *Server) cfgLogRus() error {
 		logrus.SetReportCaller(true)
 	}
 	if viper.GetBool("server.logrus.json") {
-
 		logrus.SetFormatter(&logrus.JSONFormatter{})
 	}
 	return nil
