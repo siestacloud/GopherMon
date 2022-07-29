@@ -20,7 +20,7 @@ type RAM interface {
 type MtrxList interface {
 	TestDB() error
 	Create(mtrx *core.Metric) (int, error)
-	Get(name, mtype string) (*core.Metric, error)
+	Get(name string) (*core.Metric, error)
 	Update(mtrx *core.Metric) (int, error)
 	Add(mtrx *core.Metric) (int, error)
 }

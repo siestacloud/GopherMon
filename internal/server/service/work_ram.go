@@ -5,7 +5,6 @@ import (
 
 	"github.com/siestacloud/service-monitoring/internal/core"
 	"github.com/siestacloud/service-monitoring/internal/server/repository"
-	"github.com/sirupsen/logrus"
 )
 
 type RAMService struct {
@@ -54,8 +53,6 @@ func (r *RAMService) Create(key string, mtrx *core.Metric) error {
 func (r *RAMService) Add(key string, mtrx *core.Metric) error {
 	err := r.repo.Update(key, mtrx)
 	if err != nil {
-		logrus.Warn("unable find and update metric in storage: ", err)
-		logrus.Warn("try add new metric")
 		return err
 	}
 	return nil
