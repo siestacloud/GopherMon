@@ -291,9 +291,6 @@ func (h *Handler) MultupleMtrxJSON() echo.HandlerFunc {
 			return errResponse(c, http.StatusBadRequest, "unable read new client mtrx from body request: "+err.Error())
 		}
 
-		b, _ := json.Marshal(mtrxCase)
-		fmt.Println(string(b))
-
 		infoPrint("in tune", "	success parse in object mtrx")
 		var val int
 		// При подключенной postgres
@@ -304,6 +301,7 @@ func (h *Handler) MultupleMtrxJSON() echo.HandlerFunc {
 			}
 		}
 
+		infoPrint("200", "request: "+h.cfg.Address+c.Request().URL.String())
 		return c.JSON(http.StatusOK, statusResponse{strconv.Itoa(val)})
 	}
 }

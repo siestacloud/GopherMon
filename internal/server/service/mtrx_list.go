@@ -81,6 +81,7 @@ func (m *MtrxListService) Flush(mtrxCase []core.Metric) (int, error) {
 			dbMtrx, err := m.repo.Get(mtrx.ID)
 			if err != nil {
 				logrus.Warn("mtrx not exist in postgres: ", err)
+				mtrxCaseOK = append(mtrxCaseOK, mtrx)
 				continue
 			}
 			if mtrx.GetType() == dbMtrx.GetType() {
