@@ -222,6 +222,9 @@ func (h *Handler) ShowMetricJSON() echo.HandlerFunc {
 		if err := json.NewDecoder(c.Request().Body).Decode(&mtrx); err != nil {
 			return errResponse(c, http.StatusNotFound, "unable decode mtrx"+err.Error())
 		}
+		infoPrint("in tune", "	mtrx in request: "+mtrx.GetID())
+		b, _ := json.Marshal(mtrx)
+		fmt.Println("IN VALUE", string(b))
 
 		// При подключенной postgres
 		if h.cfg.URLPostgres != "" {
