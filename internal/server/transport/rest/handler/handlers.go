@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
 
 	"github.com/labstack/echo/v4"
 	"github.com/sirupsen/logrus"
@@ -221,6 +222,9 @@ func (h *Handler) ShowMetricJSON() echo.HandlerFunc {
 		if err := json.NewDecoder(c.Request().Body).Decode(&mtrx); err != nil {
 			return errResponse(c, http.StatusNotFound, "unable decode mtrx"+err.Error())
 		}
+		infoPrint("in tune", "	mtrx in request: "+mtrx.GetID())
+		b, _ := json.Marshal(mtrx)
+		fmt.Println("IN VALUE", string(b))
 
 		// При подключенной postgres
 		if h.cfg.URLPostgres != "" {
@@ -266,5 +270,38 @@ func (h *Handler) CheckDB() echo.HandlerFunc {
 
 		infoPrint("200", "request: "+h.cfg.Address+c.Request().URL.String())
 		return c.JSON(http.StatusOK, statusResponse{"ok"})
+	}
+}
+
+func (h *Handler) MultupleMtrxJSON() echo.HandlerFunc {
+	return func(c echo.Context) error {
+
+		c.Response().Header().Add("Content-Type", "application/json")
+		infoPrint("in tune", "request: "+h.cfg.Address+c.Request().URL.String())
+		body, err := io.ReadAll(c.Request().Body)
+		if err != nil {
+			return errResponse(c, http.StatusInternalServerError, "unable read data from body request: "+err.Error())
+		}
+		infoPrint("in tune", "	mtrx in request: "+string(body))
+
+		defer c.Request().Body.Close()
+
+		mtrxCase, err := core.UnmarshalMetricCaseJSON(body)
+		if err != nil {
+			return errResponse(c, http.StatusBadRequest, "unable read new client mtrx from body request: "+err.Error())
+		}
+
+		infoPrint("in tune", "	success parse in object mtrx")
+		var val int
+		// При подключенной postgres
+		if h.cfg.URLPostgres != "" {
+			val, err = h.services.MtrxList.Flush(mtrxCase)
+			if err != nil {
+				return errResponse(c, http.StatusNotFound, "unable insert or update mrtxs: "+err.Error())
+			}
+		}
+
+		infoPrint("200", "request: "+h.cfg.Address+c.Request().URL.String())
+		return c.JSON(http.StatusOK, statusResponse{strconv.Itoa(val)})
 	}
 }

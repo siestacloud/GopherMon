@@ -22,3 +22,19 @@ migrate -path . -database 'postgres://postgres:qwerty@localhost:5432/postgres?ss
 ```
 
 ---
+
+
+
+
+INSERT INTO mtrx (name, type, value,delta)
+VALUES
+    (
+        'testMtrx',
+        'gauge',
+        123,
+        NULL
+    )
+ON CONFLICT (name)
+DO
+UPDATE
+SET type='gauge', value = 11, delta = NULL;

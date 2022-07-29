@@ -73,3 +73,7 @@ func (m *MtrxListService) Add(mtrx *core.Metric) (int, error) {
 	}
 	return 0, errors.New("mtrx in db have another type. drop this mtrx") //доб новую метрику в мапку
 }
+
+func (m *MtrxListService) Flush(mtrxCase []core.Metric) (int, error) {
+	return m.repo.Flush(mtrxCase)
+}

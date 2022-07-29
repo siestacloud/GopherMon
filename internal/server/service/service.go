@@ -22,6 +22,7 @@ type MtrxList interface {
 	Create(mtrx *core.Metric) (int, error)
 	Get(name string) (*core.Metric, error)
 	Update(mtrx *core.Metric) (int, error)
+	Flush(mtrxCase []core.Metric) (int, error)
 	Add(mtrx *core.Metric) (int, error)
 }
 

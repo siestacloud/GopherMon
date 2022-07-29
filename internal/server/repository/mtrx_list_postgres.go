@@ -4,10 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/siestacloud/service-monitoring/internal/core"
+	"github.com/sirupsen/logrus"
 )
 
 type MtrxListPostgres struct {
@@ -82,4 +84,93 @@ func (m *MtrxListPostgres) Update(mtrx *core.Metric) (int, error) {
 
 	_, err := m.db.Exec(createItemQuery)
 	return 1, err
+}
+
+func (r *MtrxListPostgres) Flush(mtrxCase []core.Metric) (int, error) {
+
+	// на всякий
+	if r.db == nil {
+		return 0, errors.New("You haven`t opened the database connection")
+	}
+
+	for _, mtrx := range mtrxCase {
+		tx, err := r.db.Begin()
+		if err != nil {
+			return 0, err
+
+		}
+
+		defer tx.Rollback()
+
+		// stmt, err := tx.Prepare("INSERT INTO videos(title, description, views, likes) VALUES(?,?,?,?)")
+		// stmt, err := tx.Prepare(`INSERT INTO mtrx (name, type)
+		//                  VALUES($1,$2);`)
+
+		// готовим инструкцию
+		stmt, err := tx.Prepare(`INSERT INTO mtrx (name, type, value, delta) VALUES ($1, $2, $3, $4) ON CONFLICT (name) DO UPDATE SET type=$2, value = $3, delta = $4;`)
+		if err != nil {
+			return 0, err
+		}
+		defer stmt.Close()
+
+		if mtrx.MType == "gauge" {
+			// указываю, что каждая метрика будет добавлена в транзакцию
+			if _, err = stmt.Exec(
+				// переменная в запросе
+				mtrx.ID,
+				mtrx.MType,
+				*mtrx.Value,
+				nil,
+			); err != nil {
+				if err = tx.Rollback(); err != nil {
+					log.Fatalf("update drivers: unable to rollback: %v", err)
+				}
+				return 0, err
+			}
+
+		} else {
+
+			if mtrx.GetType() == "counter" {
+				dbMtrx, err := r.Get(mtrx.ID)
+				if err != nil {
+					logrus.Warn("mtrx not exist in postgres: ", err)
+
+				} else {
+					if mtrx.GetType() == dbMtrx.GetType() {
+						if mtrx.GetType() == "counter" {
+							sumDelta := *mtrx.Delta + *dbMtrx.Delta
+							// сохраняю в базе
+							err = mtrx.SetValue(sumDelta)
+							if err != nil {
+								return 0, err
+							}
+							logrus.Warn("OKs", *mtrx.Delta)
+						}
+					}
+				}
+			}
+
+			// указываю, что каждая метрика будет добавлена в транзакцию
+			if _, err = stmt.Exec(
+				// переменная в запросе
+				mtrx.ID,
+				mtrx.MType,
+				nil,
+				*mtrx.Delta,
+			); err != nil {
+
+				if err = tx.Rollback(); err != nil {
+					log.Fatalf("update drivers: unable to rollback: %v", err)
+				}
+				return 0, err
+			}
+		}
+
+		//сохраняем измен`ения
+		if err := tx.Commit(); err != nil {
+			log.Fatalf("update drivers: unable to commit: %v", err)
+		}
+	}
+
+	return 1, nil
 }
