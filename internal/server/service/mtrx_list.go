@@ -75,27 +75,5 @@ func (m *MtrxListService) Add(mtrx *core.Metric) (int, error) {
 }
 
 func (m *MtrxListService) Flush(mtrxCase []core.Metric) (int, error) {
-	mtrxCaseOK := []core.Metric{}
-	for _, mtrx := range mtrxCase {
-		if mtrx.GetType() == "counter" {
-			dbMtrx, err := m.repo.Get(mtrx.ID)
-			if err != nil {
-				logrus.Warn("mtrx not exist in postgres: ", err)
-				mtrxCaseOK = append(mtrxCaseOK, mtrx)
-				continue
-			}
-			if mtrx.GetType() == dbMtrx.GetType() {
-				if mtrx.GetType() == "counter" {
-					sumDelta := *mtrx.Delta + *dbMtrx.Delta
-					// сохраняю в базе
-					err = mtrx.SetValue(sumDelta)
-					if err != nil {
-						return 0, err
-					}
-				}
-			}
-		}
-		mtrxCaseOK = append(mtrxCaseOK, mtrx)
-	}
-	return m.repo.Flush(mtrxCaseOK)
+	return m.repo.Flush(mtrxCase)
 }
