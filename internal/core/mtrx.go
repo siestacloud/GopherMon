@@ -211,6 +211,63 @@ func (m *Metric) UnmarshalMetricJSON(data []byte) error {
 	return errors.New("something incorrect")
 }
 
+//Создает метрики и чекает ее поля из JSON
+func UnmarshalMetricCaseJSON(data []byte) ([]Metric, error) {
+	mtrxCaseCheck := []Metric{} // пул полученных от клиента метрик, не проверенных
+	mtrxCase := []Metric{}      // пул полученных от клиента метрик, проверенных
+
+	// if err := json.NewDecoder(r).Decode(&mtrxCheck); err != nil {
+	// 	return err
+	// }
+
+	if err := json.Unmarshal(data, &mtrxCaseCheck); err != nil {
+		return nil, err
+	}
+
+	for _, mtrxCheck := range mtrxCaseCheck {
+
+		mtrx := NewMetric()
+
+		err := mtrx.SetID(mtrxCheck.GetID()) // Проверка имени метрики
+		if err != nil {
+			return nil, err // Проверка не пройдена
+		}
+		err = mtrx.SetType(mtrxCheck.GetType()) //Проверка типа метрики
+		if err != nil {
+			return nil, err //Проверка не пройдена
+		}
+
+		mtrx.Hash = mtrxCheck.Hash
+
+		if mtrx.GetType() == "counter" { //Если у новой метрики тип counter
+			d, err := mtrxCheck.GetDelta()
+			if err != nil {
+				return nil, err
+			}
+			if err := mtrx.SetValue(d); err != nil {
+				return nil, err
+			}
+			mtrxCase = append(mtrxCase, *mtrx)
+			continue
+		}
+		if mtrx.GetType() == "gauge" {
+			fmt.Println("OKS")
+			v, err := mtrxCheck.GetValue() //Если у новой метрики тип gauge
+			if err != nil {
+				return nil, err
+			}
+			if err := mtrx.SetValue(v); err != nil {
+				return nil, err
+			} //Присваиваем value float64/
+			mtrxCase = append(mtrxCase, *mtrx)
+			continue
+		}
+
+	}
+	return mtrxCase, nil
+
+}
+
 // Вычисляем hash метрики
 func (m *Metric) SetHash(key string) error {
 	if key != "" {

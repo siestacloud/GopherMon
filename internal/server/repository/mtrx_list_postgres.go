@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/jmoiron/sqlx"
@@ -61,4 +62,38 @@ func (r *MtrxListPostgres) Update(mtrx *core.Metric) (int, error) {
 		return 0, err
 	}
 	return mtrxId, nil
+}
+
+func (r *MtrxListPostgres) Flush(mtrx []core.Metric) (int, error) {
+
+	// проверим на всякий случай
+	if r.db == nil {
+		return 0, errors.New("You haven`t opened the database connection")
+	}
+	tx, err := r.db.Begin()
+	if err != nil {
+		return 0, err
+	}
+
+	stmt, err := tx.Prepare("INSERT INTO videos(title, description, views, likes) VALUES(?,?,?,?)")
+	if err != nil {
+		return err
+	}
+
+	for _, v := range db.buffer {
+		if _, err = stmt.Exec(v.Title, v.Description, v.Views, v.Likes); err != nil {
+			if err = tx.Rollback(); err != nil {
+				log.Fatalf("update drivers: unable to rollback: %v", err)
+			}
+			return err
+		}
+	}
+
+	if err := tx.Commit(); err != nil {
+		log.Fatalf("update drivers: unable to commit: %v", err)
+	}
+
+	db.buffer = db.buffer[:0]
+
+	return 0, nil
 }

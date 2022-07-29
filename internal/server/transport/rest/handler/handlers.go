@@ -232,3 +232,30 @@ func (h *Handler) CheckDB() echo.HandlerFunc {
 		return c.JSON(http.StatusOK, statusResponse{"ok"})
 	}
 }
+
+func (h *Handler) MultupleMtrxJSON() echo.HandlerFunc {
+	return func(c echo.Context) error {
+
+		c.Response().Header().Add("Content-Type", "application/json")
+		infoPrint("in tune", "request: "+h.cfg.Address+c.Request().URL.String())
+		body, err := io.ReadAll(c.Request().Body)
+		if err != nil {
+			return errResponse(c, http.StatusInternalServerError, "unable read data from body request: "+err.Error())
+		}
+		infoPrint("in tune", "	mtrx in request: "+string(body))
+
+		defer c.Request().Body.Close()
+
+		mtrxCase, err := core.UnmarshalMetricCaseJSON(body)
+		if err != nil {
+			return errResponse(c, http.StatusBadRequest, "unable read new client mtrx from body request: "+err.Error())
+		}
+
+		b, _ := json.Marshal(mtrxCase)
+		fmt.Println(string(b))
+
+		infoPrint("in tune", "	success parse in object mtrx")
+
+		return c.JSON(http.StatusOK, statusResponse{"ok"})
+	}
+}
