@@ -275,7 +275,7 @@ func mtrxMotion(c int64, cms *runtime.MemStats) (*core.MetricsPool, error) {
 		return nil, errors.New("unable add freeMemory mtrx into MetricsPool: " + freeMemory.GetID() + freeMemory.GetType())
 	}
 
-	cpuPercent, _ := cpu.Percent(time.Second, true)
+	cpuPercent, _ := cpu.Percent(1000000, true)
 
 	for i, cpu := range cpuPercent {
 
