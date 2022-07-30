@@ -13,11 +13,14 @@ import (
 	"os/signal"
 	"reflect"
 	"runtime"
+	"strconv"
 	"syscall"
 	"time"
 
 	"github.com/caarlos0/env/v6"
 	"github.com/go-resty/resty/v2"
+	"github.com/shirou/gopsutil/cpu"
+	"github.com/shirou/gopsutil/v3/mem"
 	"github.com/siestacloud/service-monitoring/internal/core"
 	"github.com/sirupsen/logrus"
 )
@@ -51,7 +54,6 @@ func init() {
 	flag.DurationVar(&cfg.ReportInterval, "r", 10000000000, "Report interval. Possible values: 1s 12s 1m")
 	flag.StringVar(&cfg.Key, "k", "", "key for data sign. Possible values: 123qwe123")
 	flag.Parse()
-
 	err := env.Parse(&cfg)
 	if err != nil {
 		log.Fatal(err)
@@ -236,6 +238,64 @@ func mtrxMotion(c int64, cms *runtime.MemStats) (*core.MetricsPool, error) {
 		if err := mtrxPool.Create(m.ID, *m); err != nil { // Метрика добавляется в общий пул (мапку)
 			return nil, errors.New("unable add runtime mtrx into MetricsPool: " + m.GetID() + "  " + m.GetType())
 		}
+	}
+	memory, _ := mem.VirtualMemory()
+
+	totalMemory := core.NewMetric()
+	if err := totalMemory.SetID("TotalMemory"); err != nil {
+		return nil, err
+	}
+	if err := totalMemory.SetType("gauge"); err != nil {
+		return nil, err
+	}
+	if err := totalMemory.SetValue(float64(memory.Total)); err != nil {
+		return nil, err
+	}
+	if err := totalMemory.SetHash(cfg.Key); err != nil {
+		return nil, err
+	}
+	if err := mtrxPool.Create(totalMemory.ID, *totalMemory); err != nil {
+		return nil, errors.New("unable add totalMemory mtrx into MetricsPool: " + totalMemory.GetID() + totalMemory.GetType())
+	}
+
+	freeMemory := core.NewMetric()
+	if err := freeMemory.SetID("FreeMemory"); err != nil {
+		return nil, err
+	}
+	if err := freeMemory.SetType("gauge"); err != nil {
+		return nil, err
+	}
+	if err := freeMemory.SetValue(float64(memory.Free)); err != nil {
+		return nil, err
+	}
+	if err := freeMemory.SetHash(cfg.Key); err != nil {
+		return nil, err
+	}
+	if err := mtrxPool.Create(freeMemory.ID, *freeMemory); err != nil {
+		return nil, errors.New("unable add freeMemory mtrx into MetricsPool: " + freeMemory.GetID() + freeMemory.GetType())
+	}
+
+	cpuPercent, _ := cpu.Percent(time.Second, true)
+
+	for i, cpu := range cpuPercent {
+
+		CPUutilization := core.NewMetric()
+		if err := CPUutilization.SetID("CPUutilization" + strconv.Itoa(i+1)); err != nil {
+			return nil, err
+		}
+		if err := CPUutilization.SetType("gauge"); err != nil {
+			return nil, err
+		}
+		if err := CPUutilization.SetValue(cpu); err != nil {
+			continue
+		}
+		if err := CPUutilization.SetHash(cfg.Key); err != nil {
+			return nil, err
+		}
+		if err := mtrxPool.Create(CPUutilization.ID, *CPUutilization); err != nil { // Метрика добавляется в общий пул (мапку)
+			return nil, errors.New("unable add CPUutilization into MetricsPool: " + CPUutilization.GetID() + "  " + CPUutilization.GetType())
+		}
+
 	}
 	return mtrxPool, nil
 }
