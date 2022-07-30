@@ -275,10 +275,11 @@ func mtrxMotion(c int64, cms *runtime.MemStats) (*core.MetricsPool, error) {
 		return nil, errors.New("unable add freeMemory mtrx into MetricsPool: " + freeMemory.GetID() + freeMemory.GetType())
 	}
 
-	cpuPercent, _ := cpu.Percent(1000000, true)
+	// cpuPercent, _ := cpu.Percent(100000000, true)
+	utilCpu, _ := cpu.Times(true)
 
-	for i, cpu := range cpuPercent {
-
+	for i, cpu := range utilCpu {
+		// logrus.Info(cpu)
 		CPUutilization := core.NewMetric()
 		if err := CPUutilization.SetID("CPUutilization" + strconv.Itoa(i+1)); err != nil {
 			return nil, err
@@ -286,7 +287,8 @@ func mtrxMotion(c int64, cms *runtime.MemStats) (*core.MetricsPool, error) {
 		if err := CPUutilization.SetType("gauge"); err != nil {
 			return nil, err
 		}
-		if err := CPUutilization.SetValue(cpu); err != nil {
+
+		if err := CPUutilization.SetValue(cpu.User); err != nil {
 			continue
 		}
 		if err := CPUutilization.SetHash(cfg.Key); err != nil {
