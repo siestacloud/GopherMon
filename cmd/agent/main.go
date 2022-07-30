@@ -279,7 +279,7 @@ func mtrxMotion(c int64, cms *runtime.MemStats) (*core.MetricsPool, error) {
 	utilCpu, _ := cpu.Times(true)
 
 	for i, cpu := range utilCpu {
-		// logrus.Info(cpu)
+		logrus.Info(cpu.Total())
 		CPUutilization := core.NewMetric()
 		if err := CPUutilization.SetID("CPUutilization" + strconv.Itoa(i+1)); err != nil {
 			return nil, err
@@ -288,7 +288,7 @@ func mtrxMotion(c int64, cms *runtime.MemStats) (*core.MetricsPool, error) {
 			return nil, err
 		}
 
-		if err := CPUutilization.SetValue(cpu.User); err != nil {
+		if err := CPUutilization.SetValue(cpu.Total()); err != nil {
 			continue
 		}
 		if err := CPUutilization.SetHash(cfg.Key); err != nil {
